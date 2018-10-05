@@ -1,2 +1,2 @@
-# rb-rca5
-Gazebo Environment for RB-RCA5
+# Marble Finding Robot
+Gazebo Environment for RB-RCA5.
