@@ -10,3 +10,17 @@ PKGCONFIG += gazebo
 PKGCONFIG += opencv
 
 HEADERS +=
+
+# Library: FuzzyLite
+INCLUDEPATH += $$PWD/../../marble-finding-robot/libraries/fuzzylite-6.0/fuzzylite
+debug
+{
+    LIBS += -L$$PWD/../../marble-finding-robot/libraries/fuzzylite-6.0/fuzzylite/debug/bin/ -lfuzzylite-debug
+}
+
+release
+{
+    LIBS += -L$$PWD/../../marble-finding-robot/libraries/fuzzylite-6.0/fuzzylite/release/bin/ -lfuzzylite
+}
+
+

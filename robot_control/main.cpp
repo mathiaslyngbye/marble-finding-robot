@@ -1,14 +1,16 @@
 #include <gazebo/gazebo_client.hh>
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/transport/transport.hh>
+#include "fl/Headers.h"
 
 #include <opencv2/opencv.hpp>
 
 #include <iostream>
 
 // Common variables
-
-
+float lidar_ranges[200];
+float lidar_angles[200];
+    int lock = 0;
 
 static boost::mutex mutex;
 
@@ -77,8 +79,8 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
     int height = 400;
     float px_per_m = 200 / range_max;
 
-    float sd_range_tmp = 10;
-    float sd_angle_tmp = 0;
+    float lidar_ranges_tmp[200];
+    float lidar_angles_tmp[200];
 
     cv::Mat im(height, width, CV_8UC3);
     im.setTo(0);
@@ -98,15 +100,18 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 
         //std::cout << "Sensor: " << i << "\tAngle: " << angle << "\tRange: " << range << std::endl;
 
-        if (range<sd_range_tmp)
-        {
-            sd_range_tmp = range;
-            sd_angle_tmp = angle;
-        }
+        lidar_ranges_tmp[i] = range;
+        lidar_angles_tmp[i] = angle;
+
     }
 
-    sd_range = sd_range_tmp;
-    sd_angle = sd_angle_tmp;
+    mutex.lock();
+    for(int i = 0; i < 200; i++)
+    {
+        lidar_ranges[i] = lidar_ranges_tmp[i];
+        lidar_angles[i] = lidar_angles_tmp[i];
+    }
+    mutex.unlock();
 
     cv::circle(im, cv::Point(200, 200), 2, cv::Scalar(0, 0, 255));
     cv::putText(im, std::to_string(sec) + ":" + std::to_string(nsec),
@@ -117,6 +122,22 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
     cv::imshow("lidar", im);
     mutex.unlock();
 }
+
+void fuzzy_control(float &speed, float &dir)
+{
+    float front_range = (lidar_ranges[99]+lidar_ranges[100])/2;
+    speed = front_range*0.12;
+
+    if(front_range < 3)
+    {
+        dir = 0.4;
+    }
+    else
+    {
+        dir = 0;
+    }
+}
+
 
 int main(int _argc, char **_argv) {
   // Load gazebo
@@ -186,25 +207,8 @@ int main(int _argc, char **_argv) {
       //      dir *= 0.1;
     }
 
-    // CONTROL BLOCK :)
-    std::cout << "Angle: " << sd_angle << " Range: " << sd_range << std::endl;
-
-    speed = 0.25;
-
-    if(sd_range > 1.5)
-    {
-        dir = 0;
-    }
-    else if(sd_angle < 0)
-    {
-        dir = -0.4-(sd_range/5);
-    }
-    else if(sd_angle>0)
-    {
-        dir = 0.4-(sd_range/5);
-    }
-
-    // END OF CONTROL BLOCK
+    // Control
+    fuzzy_control(speed, dir);
 
 
     // Generate a pose
@@ -219,3 +223,4 @@ int main(int _argc, char **_argv) {
   // Make sure to shut everything down.
   gazebo::client::shutdown();
 }
+
