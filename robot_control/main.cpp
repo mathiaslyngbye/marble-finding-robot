@@ -10,10 +10,11 @@
 // Common variables
 float lidar_ranges[200];
 float lidar_angles[200];
-    int lock = 0;
+cv::Mat camera;
 
 static boost::mutex mutex;
 
+// Gazebo Stat Callback Function
 void statCallback(ConstWorldStatisticsPtr &_msg) {
   (void)_msg;
   // Dump the message contents to stdout.
@@ -21,6 +22,7 @@ void statCallback(ConstWorldStatisticsPtr &_msg) {
     //std::cout << std::flush;
 }
 
+// Gazebo Pose Callback Function
 void poseCallback(ConstPosesStampedPtr &_msg) {
   // Dump the message contents to stdout.
   //  std::cout << _msg->DebugString();
@@ -42,6 +44,7 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
   }
 }
 
+// Gazebo Camera Callback Function
 void cameraCallback(ConstImageStampedPtr &msg) {
 
   std::size_t width = msg->image().width();
@@ -54,9 +57,11 @@ void cameraCallback(ConstImageStampedPtr &msg) {
 
   mutex.lock();
   cv::imshow("camera", im);
+  camera = im;
   mutex.unlock();
 }
 
+// Gazebo Lidar Callback Function
 void lidarCallback(ConstLaserScanStampedPtr &msg) {
 
     //std::cout << ">> " << msg->DebugString() << std::endl;
@@ -123,14 +128,86 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
     mutex.unlock();
 }
 
+// Scan image for blue pixels
+int getBlue(cv::Mat image)
+{
+    int blueLeft = 0;
+    int blueRight = 0;
+    for (int rows = image.rows*0.4; rows < image.rows*0.6; rows++)
+    {
+        for (int cols = 0; cols < image.cols; cols++)
+        {
+            int threshold = std::max(static_cast<int>(image.at<cv::Vec3b>(cv::Point(cols,rows))[1]), static_cast<int>(image.at<cv::Vec3b>(cv::Point(cols,rows))[2]))*1.8;
+            if(static_cast<int>(image.at<cv::Vec3b>(cv::Point(cols,rows))[0])>threshold)
+            {
+                if(cols<image.cols*0.5)
+                {
+                    blueLeft++;
+                }
+                else
+                {
+                    blueRight++;
+                }
+                //image.at<Vec3b>(Point(cols,rows)) = color_blue;
+            }
+        }
+    }
+    std::cout << "Left: " << blueLeft << "\t Right: " << blueRight << std::endl;
+
+    if(blueLeft > blueRight)
+    {
+        return 1;
+    }
+    else if(blueLeft < blueRight)
+    {
+        return 2;
+    }
+    else if((blueLeft == blueRight)&&(blueLeft == 0))
+    {
+        return 0;
+    }
+    else
+    {
+        return 3;
+    }
+}
+
+// Controller function
 void fuzzy_control(float &speed, float &dir)
 {
+    /*
     float front_range = (lidar_ranges[99]+lidar_ranges[100])/2;
     speed = front_range*0.12;
 
     if(front_range < 3)
     {
         dir = 0.4;
+    }
+    else
+    {
+        dir = 0;
+    }
+
+    */
+
+    speed = 1;
+
+    int blue = getBlue(camera);
+    if(blue == 1)
+    {
+        if(dir>0)
+            dir = 0;
+
+        if ((dir>-0.4)&&(dir<0.4))
+            dir += -0.05;
+    }
+    else if (blue == 2)
+    {
+        if(dir<0)
+            dir = 0;
+
+        if ((dir>-0.4)&&(dir<0.4))
+            dir += 0.05;
     }
     else
     {
