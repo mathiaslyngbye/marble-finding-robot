@@ -61,6 +61,65 @@ void cameraCallback(ConstImageStampedPtr &msg) {
   mutex.unlock();
 }
 
+// FuzzyLite
+void fuzzylite(float &speed, float &dir)
+{
+    using namespace fl;
+
+    Engine* engine = new Engine;
+    engine->setName("ObstacleAvoidance");
+    engine->setDescription("");
+
+    InputVariable* obstacle = new InputVariable;
+    obstacle->setName("obstacle");
+    obstacle->setDescription("");
+    obstacle->setEnabled(true);
+    obstacle->setRange(0.000, 1.000);
+    obstacle->setLockValueInRange(false);
+    obstacle->addTerm(new Ramp("left", 1.000, 0.000));
+    obstacle->addTerm(new Ramp("right", 0.000, 1.000));
+    engine->addInputVariable(obstacle);
+
+    OutputVariable* mSteer = new OutputVariable;
+    mSteer->setName("mSteer");
+    mSteer->setDescription("");
+    mSteer->setEnabled(true);
+    mSteer->setRange(0.000, 1.000);
+    mSteer->setLockValueInRange(false);
+    mSteer->setAggregation(new Maximum);
+    mSteer->setDefuzzifier(new Centroid(100));
+    mSteer->setDefaultValue(fl::nan);
+    mSteer->setLockPreviousValue(false);
+    mSteer->addTerm(new Ramp("left", 1.000, 0.000));
+    mSteer->addTerm(new Ramp("right", 0.000, 1.000));
+    engine->addOutputVariable(mSteer);
+
+    RuleBlock* mamdani = new RuleBlock;
+    mamdani->setName("mamdani");
+    mamdani->setDescription("");
+    mamdani->setEnabled(true);
+    mamdani->setConjunction(fl::null);
+    mamdani->setDisjunction(fl::null);
+    mamdani->setImplication(new AlgebraicProduct);
+    mamdani->setActivation(new General);
+    mamdani->addRule(Rule::parse("if obstacle is left then mSteer is right", engine));
+    mamdani->addRule(Rule::parse("if obstacle is right then mSteer is left", engine));
+    engine->addRuleBlock(mamdani);
+
+    std::string status;
+    if (not engine->isReady(&status))
+        throw Exception("[engine error] engine is not ready:\n" + status, FL_AT);
+
+    for (int i = 0; i <= 50; ++i)
+    {
+        scalar location = obstacle->getMinimum() + i * (obstacle->range() / 50);
+        obstacle->setValue(location);
+        engine->process();
+        FL_LOG("obstacle.input = " << Op::str(location) <<
+            " => " << "steer.output = " << Op::str(mSteer->getValue()));
+    }
+}
+
 // Gazebo Lidar Callback Function
 void lidarCallback(ConstLaserScanStampedPtr &msg) {
 
@@ -129,7 +188,7 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 }
 
 // Scan image for blue pixels
-int getBlue(cv::Mat image)
+float getBlue(cv::Mat image)
 {
     int blueLeft = 0;
     int blueRight = 0;
@@ -152,69 +211,28 @@ int getBlue(cv::Mat image)
             }
         }
     }
-    std::cout << "Left: " << blueLeft << "\t Right: " << blueRight << std::endl;
 
-    if(blueLeft > blueRight)
+    int pixel_threshold = 500;
+    float pixel_difference =  blueRight - blueLeft;
+
+    if(pixel_difference < -pixel_threshold)
     {
-        return 1;
+        pixel_difference = -pixel_threshold;
     }
-    else if(blueLeft < blueRight)
+    else if(pixel_difference > pixel_threshold)
     {
-        return 2;
+        pixel_difference = pixel_threshold;
     }
-    else if((blueLeft == blueRight)&&(blueLeft == 0))
-    {
-        return 0;
-    }
-    else
-    {
-        return 3;
-    }
+
+    return pixel_difference / 500;
 }
 
 // Controller function
-void fuzzy_control(float &speed, float &dir)
+void control(float &speed, float &dir)
 {
-    /*
-    float front_range = (lidar_ranges[99]+lidar_ranges[100])/2;
-    speed = front_range*0.12;
-
-    if(front_range < 3)
-    {
-        dir = 0.4;
-    }
-    else
-    {
-        dir = 0;
-    }
-
-    */
-
     speed = 1;
-
-    int blue = getBlue(camera);
-    if(blue == 1)
-    {
-        if(dir>0)
-            dir = 0;
-
-        if ((dir>-0.4)&&(dir<0.4))
-            dir += -0.05;
-    }
-    else if (blue == 2)
-    {
-        if(dir<0)
-            dir = 0;
-
-        if ((dir>-0.4)&&(dir<0.4))
-            dir += 0.05;
-    }
-    else
-    {
-        dir = 0;
-    }
+    dir = getBlue(camera)*0.4;
 }
-
 
 int main(int _argc, char **_argv) {
   // Load gazebo
@@ -285,7 +303,7 @@ int main(int _argc, char **_argv) {
     }
 
     // Control
-    fuzzy_control(speed, dir);
+    control(speed, dir);
 
 
     // Generate a pose
