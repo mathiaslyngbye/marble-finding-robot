@@ -1,9 +1,9 @@
-#include "fuzzy1.h"
+#include "FuzzyDefault.h"
 
 #include <fl/Headers.h>
 #include <iostream>
 
-fuzzy1::fuzzy1()
+FuzzyDefault::FuzzyDefault()
 {
     using namespace fl;
     //Setup of the controller
@@ -96,13 +96,13 @@ fuzzy1::fuzzy1()
     p_speed = speed;
 }
 
-void fuzzy1::process()
+void FuzzyDefault::process()
 {
     p_engine->process();
-    std::cout << "Process 1" << std::endl;
+    //std::cout << "Process 1" << std::endl;
 }
 
-controlOutput fuzzy1::getOutput()
+controlOutput FuzzyDefault::getOutput()
 {
     controlOutput out;
     out.direction = p_Sdir->getValue();
@@ -111,7 +111,7 @@ controlOutput fuzzy1::getOutput()
     return out;
 }
 
-void fuzzy1::setValues(float distance, float direction)
+void FuzzyDefault::setValues(float distance, float direction)
 {
     p_Odist->setValue(distance);
     p_Odir->setValue(direction);

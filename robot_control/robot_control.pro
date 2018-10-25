@@ -3,13 +3,16 @@ CONFIG += console c++11
 CONFIG -= app_bundle
 CONFIG -= qt
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    FuzzyDefault.cpp
 
 CONFIG += link_pkgconfig
 PKGCONFIG += gazebo
 PKGCONFIG += opencv
 
-HEADERS +=
+HEADERS += \
+    laserscanner.h \
+    FuzzyDefault.h
 
 # Library: FuzzyLite
 INCLUDEPATH += $$PWD/../../marble-finding-robot/libraries/fuzzylite-6.0/fuzzylite
@@ -22,5 +25,8 @@ release
 {
     LIBS += -L$$PWD/../../marble-finding-robot/libraries/fuzzylite-6.0/fuzzylite/release/bin/ -lfuzzylite
 }
+
+DISTFILES += \
+    fuzzybugcontroller.fll
 
 

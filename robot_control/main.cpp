@@ -5,11 +5,14 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "FuzzyDefault.h"
 #include <iostream>
 
 // Common variables
 float lidar_ranges[200];
 float lidar_angles[200];
+float w_lidar_ranges[200];
+float w_lidar_angles[200];
 cv::Mat camera;
 
 static boost::mutex mutex;
@@ -61,65 +64,6 @@ void cameraCallback(ConstImageStampedPtr &msg) {
   mutex.unlock();
 }
 
-// FuzzyLite
-void fuzzylite(float &speed, float &dir)
-{
-    using namespace fl;
-
-    Engine* engine = new Engine;
-    engine->setName("ObstacleAvoidance");
-    engine->setDescription("");
-
-    InputVariable* obstacle = new InputVariable;
-    obstacle->setName("obstacle");
-    obstacle->setDescription("");
-    obstacle->setEnabled(true);
-    obstacle->setRange(0.000, 1.000);
-    obstacle->setLockValueInRange(false);
-    obstacle->addTerm(new Ramp("left", 1.000, 0.000));
-    obstacle->addTerm(new Ramp("right", 0.000, 1.000));
-    engine->addInputVariable(obstacle);
-
-    OutputVariable* mSteer = new OutputVariable;
-    mSteer->setName("mSteer");
-    mSteer->setDescription("");
-    mSteer->setEnabled(true);
-    mSteer->setRange(0.000, 1.000);
-    mSteer->setLockValueInRange(false);
-    mSteer->setAggregation(new Maximum);
-    mSteer->setDefuzzifier(new Centroid(100));
-    mSteer->setDefaultValue(fl::nan);
-    mSteer->setLockPreviousValue(false);
-    mSteer->addTerm(new Ramp("left", 1.000, 0.000));
-    mSteer->addTerm(new Ramp("right", 0.000, 1.000));
-    engine->addOutputVariable(mSteer);
-
-    RuleBlock* mamdani = new RuleBlock;
-    mamdani->setName("mamdani");
-    mamdani->setDescription("");
-    mamdani->setEnabled(true);
-    mamdani->setConjunction(fl::null);
-    mamdani->setDisjunction(fl::null);
-    mamdani->setImplication(new AlgebraicProduct);
-    mamdani->setActivation(new General);
-    mamdani->addRule(Rule::parse("if obstacle is left then mSteer is right", engine));
-    mamdani->addRule(Rule::parse("if obstacle is right then mSteer is left", engine));
-    engine->addRuleBlock(mamdani);
-
-    std::string status;
-    if (not engine->isReady(&status))
-        throw Exception("[engine error] engine is not ready:\n" + status, FL_AT);
-
-    for (int i = 0; i <= 50; ++i)
-    {
-        scalar location = obstacle->getMinimum() + i * (obstacle->range() / 50);
-        obstacle->setValue(location);
-        engine->process();
-        FL_LOG("obstacle.input = " << Op::str(location) <<
-            " => " << "steer.output = " << Op::str(mSteer->getValue()));
-    }
-}
-
 // Gazebo Lidar Callback Function
 void lidarCallback(ConstLaserScanStampedPtr &msg) {
 
@@ -145,6 +89,7 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 
     float lidar_ranges_tmp[200];
     float lidar_angles_tmp[200];
+    //float w_lidar_ranges_tmp[200];
 
     cv::Mat im(height, width, CV_8UC3);
     im.setTo(0);
@@ -166,6 +111,7 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 
         lidar_ranges_tmp[i] = range;
         lidar_angles_tmp[i] = angle;
+        //w_lidar_ranges_tmp[i] = (0.5+abs(i-100)*0.015)*range; //*range;
 
     }
 
@@ -227,13 +173,6 @@ float getBlue(cv::Mat image)
     return pixel_difference / 500;
 }
 
-// Controller function
-void control(float &speed, float &dir)
-{
-    speed = 1;
-    dir = getBlue(camera)*0.4;
-}
-
 int main(int _argc, char **_argv) {
   // Load gazebo
   gazebo::client::setup(_argc, _argv);
@@ -276,6 +215,11 @@ int main(int _argc, char **_argv) {
   float speed = 0.0;
   float dir = 0.0;
 
+  // Fuzzy Controller variables
+  FuzzyDefault controller;
+  float sm_dist = 10;
+  float sm_angl = 0;
+
   // Loop
   while (true) {
     gazebo::common::Time::MSleep(10);
@@ -303,7 +247,22 @@ int main(int _argc, char **_argv) {
     }
 
     // Control
-    control(speed, dir);
+    sm_dist = 10;
+    sm_angl = 0;
+
+    for (int i = 30; i<170;i++)
+    {
+        if (lidar_ranges[i]<sm_dist)
+        {
+            sm_dist = lidar_ranges[i];
+            sm_angl = lidar_angles[i];
+        }
+    }
+    controller.setValues(sm_dist,sm_angl);
+    controller.process();
+
+    speed = controller.getOutput().speed;
+    dir = controller.getOutput().direction;
 
 
     // Generate a pose

@@ -1,5 +1,5 @@
-#ifndef FUZZY1_H
-#define FUZZY1_H
+#ifndef FUZZYDEFAULT_H
+#define FUZZYDEFAULT_H
 
 #include<fl/Headers.h>
 
@@ -10,10 +10,10 @@ struct controlOutput {
 
 
 
-class fuzzy1
+class FuzzyDefault
 {
 public:
-    fuzzy1();
+    FuzzyDefault();
 
     void process();
     virtual controlOutput getOutput();
