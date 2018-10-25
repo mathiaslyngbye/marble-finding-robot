@@ -1,0 +1,10 @@
+/home/mathias/Desktop/fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/release/CMakeFiles/install/strip.dir
+/home/mathias/Desktop/fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/release/CMakeFiles/install/local.dir
+/home/mathias/Desktop/fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/release/CMakeFiles/install.dir
+/home/mathias/Desktop/fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/release/CMakeFiles/list_install_components.dir
+/home/mathias/Desktop/fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/release/CMakeFiles/rebuild_cache.dir
+/home/mathias/Desktop/fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/release/CMakeFiles/fl-obj.dir
+/home/mathias/Desktop/fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/release/CMakeFiles/fl-static.dir
+/home/mathias/Desktop/fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/release/CMakeFiles/fl-shared.dir
+/home/mathias/Desktop/fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/release/CMakeFiles/fl-bin.dir
+/home/mathias/Desktop/fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/release/CMakeFiles/edit_cache.dir
