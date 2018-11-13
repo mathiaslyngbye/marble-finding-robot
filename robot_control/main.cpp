@@ -97,10 +97,10 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
     mutex.unlock();
 }
 
-int main(int _argc, char **_argv) {
-
-    marbleDetect marbDetect;
-
+int main(int _argc, char **_argv)
+{
+   marbleDetect marbDetect;
+   Localization locator;
 
   // Load gazebo
   gazebo::client::setup(_argc, _argv);
@@ -113,8 +113,8 @@ int main(int _argc, char **_argv) {
   gazebo::transport::SubscriberPtr statSubscriber =
       node->Subscribe("~/world_stats", statCallback);
 
-//  gazebo::transport::SubscriberPtr poseSubscriber =
-//      node->Subscribe("~/pose/info", poseCallback);
+  gazebo::transport::SubscriberPtr poseSubscriber =
+      node->Subscribe("~/pose/info", &Localization::poseCallBack, &locator);
 
   gazebo::transport::SubscriberPtr circleDetection =
           node->Subscribe("~/pioneer2dx/camera/link/camera/image", &marbleDetect::drawCircle, &marbDetect);
@@ -186,6 +186,11 @@ int main(int _argc, char **_argv) {
         speed = controller.getOutput().speed;
 
         dir = controller.getOutput().direction;
+    }
+
+    if (locator.getDir() > 0.0)
+    {
+        std::cout << "works" << std::endl;
     }
 
     // Generate a pose
