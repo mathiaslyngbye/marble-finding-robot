@@ -188,11 +188,6 @@ int main(int _argc, char **_argv)
         dir = controller.getOutput().direction;
     }
 
-    if (locator.getDir() > 0.0)
-    {
-        std::cout << "works" << std::endl;
-    }
-
     // Generate a pose
     ignition::math::Pose3d pose(double(speed), 0, 0, 0, 0, double(dir));
 

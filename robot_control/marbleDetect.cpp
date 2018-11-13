@@ -10,46 +10,13 @@ marbleDetect::marbleDetect()
 
 }
 
-/*
+
 int marbleDetect::getMarb(cv::Mat &image)
 {
-    {
-        cv::Mat grey_img = image.clone();
-        cv::cvtColor(grey_img, grey_img, CV_RGB2GRAY);
-
-        cv::GaussianBlur(grey_img, grey_img, cv::Size(9, 9), 2, 2);
-
-        std::vector<cv::Vec3f> circles;
-        cv::HoughCircles(grey_img, circles, cv::HOUGH_GRADIENT, 1, in_img.rows/8, 50, 25, 0, 0);
-
-/*
-        for (size_t i = 0; i < circles.size(); i++) {
-            cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-            int radius = cvRound(circles[i][2]);
-            //Center
-            circle(in_img, center, 3, cv::Scalar(0, 0, 150), -1, 8, 0);
-            //Outline
-            circle(in_img, center, radius, cv::Scalar(0, 0, 150), 3, 8, 0);
-        }
-
-        circle(in_img, cv::Point(center_x, center_y), 2, cv::Scalar(255, 255, 255), -1, 8, 0);
-
-
-        circles.size() ? circBuffer.addToBuf(true) : circBuffer.addToBuf(false);
-        //std::cout << circBuffer.size() << " - " << circBuffer.isEmpty() << std::endl;
-
-        float length = 0;
-        if (!circBuffer.isEmpty() && circles.size()) {
-            // Calculate distance to center
-            cv::Vec3f largestC = {0, 0, 0};
-            for (int i = 0; i < circles.size(); i++) {
-                largestC = (circles[i][2] > largestC[2]) ? circles[i] : largestC;
-            }
-            length = (largestC[0]-center_x > 0) ? std::sqrt(std::pow(largestC[0]-center_x, 2) + std::pow(largestC[1]-center_y, 2)) : -1*std::sqrt(std::pow(largestC[0]-center_x, 2) + std::pow(largestC[1]-center_y, 2));
-        }
-        return length;
+    cv::Mat grayScale = image.clone();
+    return 0;
 }
-*/
+
 
 void marbleDetect::drawCircle(ConstImageStampedPtr &msg)
 {
