@@ -4,7 +4,9 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += main.cpp \
-    FuzzyDefault.cpp
+    FuzzyDefault.cpp \
+    localization.cpp \
+    marbleDetect.cpp
 
 CONFIG += link_pkgconfig
 PKGCONFIG += gazebo
@@ -12,7 +14,9 @@ PKGCONFIG += opencv
 
 HEADERS += \
     laserscanner.h \
-    FuzzyDefault.h
+    FuzzyDefault.h \
+    localization.h \
+    marbleDetect.h
 
 # Library: FuzzyLite
 INCLUDEPATH += $$PWD/../../marble-finding-robot/libraries/fuzzylite-6.0/fuzzylite
