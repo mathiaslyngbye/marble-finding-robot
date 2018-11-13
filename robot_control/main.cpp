@@ -5,7 +5,10 @@
 
 #include <opencv2/opencv.hpp>
 
+
+#include "localization.h"
 #include "FuzzyDefault.h"
+#include "marbleDetect.h"
 #include <iostream>
 
 // Common variables
@@ -23,45 +26,6 @@ void statCallback(ConstWorldStatisticsPtr &_msg) {
   // Dump the message contents to stdout.
     //std::cout << _msg->DebugString();
     //std::cout << std::flush;
-}
-
-// Gazebo Pose Callback Function
-void poseCallback(ConstPosesStampedPtr &_msg) {
-  // Dump the message contents to stdout.
-  //  std::cout << _msg->DebugString();
-
-  for (int i = 0; i < _msg->pose_size(); i++) {
-    if (_msg->pose(i).name() == "pioneer2dx") {
-
-        /*
-      std::cout << std::setprecision(2) << std::fixed << std::setw(6)
-                << _msg->pose(i).position().x() << std::setw(6)
-                << _msg->pose(i).position().y() << std::setw(6)
-                << _msg->pose(i).position().z() << std::setw(6)
-                << _msg->pose(i).orientation().w() << std::setw(6)
-                << _msg->pose(i).orientation().x() << std::setw(6)
-                << _msg->pose(i).orientation().y() << std::setw(6)
-                << _msg->pose(i).orientation().z() << std::endl;
-       */
-    }
-  }
-}
-
-// Gazebo Camera Callback Function
-void cameraCallback(ConstImageStampedPtr &msg) {
-
-  std::size_t width = msg->image().width();
-  std::size_t height = msg->image().height();
-  const char *data = msg->image().data().c_str();
-  cv::Mat im(int(height), int(width), CV_8UC3, const_cast<char *>(data));
-
-  im = im.clone();
-  cv::cvtColor(im, im, CV_BGR2RGB);
-
-  mutex.lock();
-  cv::imshow("camera", im);
-  camera = im;
-  mutex.unlock();
 }
 
 // Gazebo Lidar Callback Function
@@ -133,47 +97,11 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
     mutex.unlock();
 }
 
-// Scan image for blue pixels
-float getBlue(cv::Mat image)
-{
-    int blueLeft = 0;
-    int blueRight = 0;
-    for (int rows = image.rows*0.4; rows < image.rows*0.6; rows++)
-    {
-        for (int cols = 0; cols < image.cols; cols++)
-        {
-            int threshold = std::max(static_cast<int>(image.at<cv::Vec3b>(cv::Point(cols,rows))[1]), static_cast<int>(image.at<cv::Vec3b>(cv::Point(cols,rows))[2]))*1.8;
-            if(static_cast<int>(image.at<cv::Vec3b>(cv::Point(cols,rows))[0])>threshold)
-            {
-                if(cols<image.cols*0.5)
-                {
-                    blueLeft++;
-                }
-                else
-                {
-                    blueRight++;
-                }
-                //image.at<Vec3b>(Point(cols,rows)) = color_blue;
-            }
-        }
-    }
-
-    int pixel_threshold = 500;
-    float pixel_difference =  blueRight - blueLeft;
-
-    if(pixel_difference < -pixel_threshold)
-    {
-        pixel_difference = -pixel_threshold;
-    }
-    else if(pixel_difference > pixel_threshold)
-    {
-        pixel_difference = pixel_threshold;
-    }
-
-    return pixel_difference / 500;
-}
-
 int main(int _argc, char **_argv) {
+
+    marbleDetect marbDetect;
+
+
   // Load gazebo
   gazebo::client::setup(_argc, _argv);
 
@@ -185,11 +113,11 @@ int main(int _argc, char **_argv) {
   gazebo::transport::SubscriberPtr statSubscriber =
       node->Subscribe("~/world_stats", statCallback);
 
-  gazebo::transport::SubscriberPtr poseSubscriber =
-      node->Subscribe("~/pose/info", poseCallback);
+//  gazebo::transport::SubscriberPtr poseSubscriber =
+//      node->Subscribe("~/pose/info", poseCallback);
 
-  gazebo::transport::SubscriberPtr cameraSubscriber =
-      node->Subscribe("~/pioneer2dx/camera/link/camera/image", cameraCallback);
+  gazebo::transport::SubscriberPtr circleDetection =
+          node->Subscribe("~/pioneer2dx/camera/link/camera/image", &marbleDetect::drawCircle, &marbDetect);
 
   gazebo::transport::SubscriberPtr lidarSubscriber =
       node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", lidarCallback);
@@ -206,17 +134,15 @@ int main(int _argc, char **_argv) {
   worldPublisher->WaitForConnection();
   worldPublisher->Publish(controlMessage);
 
-  const int key_left = 81;
-  const int key_up = 82;
-  const int key_down = 84;
-  const int key_right = 83;
-  const int key_esc = 27;
-
   float speed = 0.0;
   float dir = 0.0;
 
+  obstacle_avoidance controller;
+  controller.init_controller();
+  take_marble controller2;
+  controller2.init_controller();
+
   // Fuzzy Controller variables
-  FuzzyDefault controller;
   float sm_dist = 10;
   float sm_angl = 0;
 
@@ -224,27 +150,11 @@ int main(int _argc, char **_argv) {
   while (true) {
     gazebo::common::Time::MSleep(10);
 
+//    DrawCircle(camera);
 
     mutex.lock();
-    int key = cv::waitKey(1);
+    cv::waitKey(1);
     mutex.unlock();
-
-    if (key == key_esc)
-      break;
-
-    if ((key == key_up) && (speed <= 1.2f))
-      speed += 0.05;
-    else if ((key == key_down) && (speed >= -1.2f))
-      speed -= 0.05;
-    else if ((key == key_right) && (dir <= 0.4f))
-      dir += 0.05;
-    else if ((key == key_left) && (dir >= -0.4f))
-      dir -= 0.05;
-    else {
-      // slow down
-      //      speed *= 0.1;
-      //      dir *= 0.1;
-    }
 
     // Control
     sm_dist = 10;
@@ -258,12 +168,25 @@ int main(int _argc, char **_argv) {
             sm_angl = lidar_angles[i];
         }
     }
-    controller.setValues(sm_dist,sm_angl);
-    controller.process();
 
-    speed = controller.getOutput().speed;
-    dir = controller.getOutput().direction;
+    if (true) //marble collection controller
+    {
+        controller.setValues(sm_dist, sm_angl);
+        controller.process();
 
+        speed = controller.getOutput().speed;
+
+        dir = controller.getOutput().direction;
+    }
+    else //obstacle avoidance controller
+    {
+        controller.setValues(sm_dist, sm_angl);
+        controller.process();
+
+        speed = controller.getOutput().speed;
+
+        dir = controller.getOutput().direction;
+    }
 
     // Generate a pose
     ignition::math::Pose3d pose(double(speed), 0, 0, 0, 0, double(dir));
