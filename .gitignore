@@ -1,0 +1,7 @@
+# Ignore build files
+build/*
+build-robot_control-Desktop-Debug/*
+build-robot_control-Desktop-Release/*
+
+# Ignore user-specific .pro files
+robot_control/robot_control.pro.user*
