@@ -12,7 +12,7 @@ class marbleDetect
 public:
     marbleDetect();
     void drawCircle(ConstImageStampedPtr &msg);
-    int getMarb(cv::Mat &image);
+    int getMarb();
     float getBlue();
 private:
     cv::Mat cameraImage;

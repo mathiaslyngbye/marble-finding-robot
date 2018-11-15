@@ -11,10 +11,40 @@ marbleDetect::marbleDetect()
 }
 
 
-int marbleDetect::getMarb(cv::Mat &image)
+int marbleDetect::getMarb()
 {
-    cv::Mat grayScale = image.clone();
-    return 0;
+    if (getBlue() != 0)
+    {
+        cv::Mat clone = cameraImage.clone();
+        cv::Mat grayMat;
+        cv::cvtColor(clone, grayMat, CV_BGR2GRAY);
+        cv::GaussianBlur(grayMat, grayMat, cv::Size(9,9), 2, 2);
+        std::vector<cv::Vec3f> circles;
+        circles.clear();
+        cv::HoughCircles(grayMat, circles, cv::HOUGH_GRADIENT, 1, grayMat.rows/8, 50, 25, 0, 0);
+
+        float dist = 0.f;
+        int rad = 0;
+        int marbNum = 0;
+        if (circles.size() > 0)
+        {
+            for (u_int i = 0; i < circles.size(); i++)
+            {
+                if (circles[i][2] > rad)
+                {
+                    rad = circles[i][2];
+                    marbNum = i;
+                }
+            }
+        }
+
+        //find dist
+        dist = circles[marbNum][0] - clone.cols/2;
+        std::cout << "dist is " << dist << std::endl;
+        return dist;
+    }
+    else
+        return 0.f;
 }
 
 
