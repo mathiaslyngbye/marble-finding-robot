@@ -32,7 +32,7 @@ Pathplanner::Pathplanner(Mat _image)
     isCalculated = false;
 }
 
-Mat Pathplanner::getPath()
+Mat Pathplanner::getPathImage()
 {
     if(isCalculated)
     {
@@ -45,8 +45,41 @@ Mat Pathplanner::getPath()
     }
 }
 
+vector<Point> Pathplanner::getEndPoints()
+{
+    if(isCalculated)
+    {
+        return endPoints;
+    }
+    else
+    {
+        cout << "Path not yet calculated. Please perform 'calculatePath()' before using this function." << endl;
+        return endPoints;
+    }
+}
+
+vector<Point> Pathplanner::getPathPoints()
+{
+    if(isCalculated)
+    {
+        return pathPoints;
+    }
+    else
+    {
+        cout << "Path not yet calculated. Please perform 'calculatePath()' before using this function." << endl;
+        return pathPoints;
+    }
+}
+
+
 void Pathplanner::calculatePath()
 {
+    if(isCalculated)
+    {
+        cout << "Path already calculated, aborting..." << endl;
+        return;
+    }
+
     brushfire();
     cout << "Brushfire complete..." << endl;
     pathLocalMaxima();
@@ -57,8 +90,8 @@ void Pathplanner::calculatePath()
     cout << "Path routing complete..." << endl;
     pathPostClean();
     cout << "Second path cleaning complete..." << endl;
-    pathEnds();
-    cout << "Path ends found..." << endl;
+    storePoints();
+    cout << "Pathpoints and endpoints stored..." << endl;
 
     isCalculated = true;
     cout << "Path calculated successfully!" << endl;
@@ -401,7 +434,7 @@ void Pathplanner::pathPostClean()
                     //cout << "Found something: " << index1 << ':' << index2 << endl;
                     //image_path.at<Vec3b>(Point(cols,rows))[INDEX_MISC] = COLORVAL_MISC;
 
-                    if(((index1 ==2) && (index2 == 1))||((index1 == 4) && (index2 == 3)))
+                    if(((index1 == 2) && (index2 == 1))||((index1 == 4) && (index2 == 3)))
                     {
                         image_path.at<Vec3b>(Point(cols,rows))[INDEX_PATH] = COLORVAL_MAX;
                     }
@@ -413,7 +446,7 @@ void Pathplanner::pathPostClean()
 
 }
 
-void Pathplanner::pathEnds()
+void Pathplanner::storePoints()
 {
     int pixelPath = 0;
 
@@ -423,7 +456,9 @@ void Pathplanner::pathEnds()
         {
             if(image_path.at<Vec3b>(Point(cols,rows))[INDEX_PATH] == COLORVAL_PATH)
             {
+
                 pixelPath = 0;
+                pathPoints.push_back(Point(cols,rows));
 
                 for(int i = 0; i<8;i++)
                 {
@@ -436,6 +471,7 @@ void Pathplanner::pathEnds()
                 if((pixelPath == 1))
                 {
                     image_path.at<Vec3b>(Point(cols,rows))[INDEX_MISC] = COLORVAL_MISC;
+                    endPoints.push_back(Point(cols,rows));
                 }
             }
         }

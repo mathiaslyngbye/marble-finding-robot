@@ -2,6 +2,7 @@
 #define PATHPLANNER_H
 
 #include <iostream>
+//#include <vector>
 #include <opencv2/opencv.hpp>
 
 using namespace std;
@@ -13,7 +14,9 @@ public:
     Pathplanner();
     Pathplanner(Mat);
     void calculatePath();
-    Mat getPath();
+    Mat getPathImage();
+    vector<Point> getEndPoints();
+    vector<Point> getPathPoints();
 private:
     void brushfire();
     void pathLocalMaxima();
@@ -22,10 +25,13 @@ private:
     void pathPostClean();
     void pathEnds();
     bool hasWhite();
+    void storePoints();
     Mat image;
     Mat image_brushfire;
     Mat image_path;
     bool isCalculated;
+    vector<Point> endPoints;
+    vector<Point> pathPoints;
 };
 
 #endif // PATHPLANNER_H
