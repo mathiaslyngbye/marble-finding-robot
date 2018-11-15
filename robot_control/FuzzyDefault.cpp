@@ -188,7 +188,7 @@ void take_marble::init_controller()
     speed->addTerm(new Ramp("backward", 0.1, -1.2));
     engine->addOutputVariable(speed);
 
-    //Outputvariable (distance to marble center)
+    //Inputvariable (distance to marble center)
     InputVariable* marbleC = new InputVariable;
     marbleC->setName("marbleC");
     marbleC->setDescription("");

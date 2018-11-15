@@ -43,7 +43,7 @@ int marbleDetect::getMarb()
         }
 
         //find dist
-        dist = circles[marbNum][0] - clone.cols/2;
+        dist = circles[marbNum][0]; //- clone.cols/2;
         std::cout << "dist is " << dist << std::endl;
         return dist;
     }
