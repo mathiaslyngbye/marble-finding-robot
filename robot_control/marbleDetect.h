@@ -14,8 +14,10 @@ public:
     void drawCircle(ConstImageStampedPtr &msg);
     int getMarb();
     float getBlue();
+    cv::Mat getCirc();
 private:
     cv::Mat cameraImage;
+    cv::Mat CircImage;
 };
 
 #endif // MARBLEDETECT_H

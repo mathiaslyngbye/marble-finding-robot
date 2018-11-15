@@ -10,6 +10,10 @@ marbleDetect::marbleDetect()
 
 }
 
+cv::Mat marbleDetect::getCirc()
+{
+    return CircImage;
+}
 
 int marbleDetect::getMarb()
 {
@@ -53,9 +57,11 @@ void marbleDetect::drawCircle(ConstImageStampedPtr &msg)
     std::size_t width = msg->image().width();
     std::size_t height = msg->image().height();
     const char *data = msg->image().data().c_str();
-    cv::Mat im(int(height), int(width), CV_8UC3, const_cast<char *>(data));
-    cv::cvtColor(im, im, CV_RGB2BGR);
-    cameraImage = im.clone();
+    cv::Mat ima(int(height), int(width), CV_8UC3, const_cast<char *>(data));
+    cv::cvtColor(ima, ima, CV_RGB2BGR);
+    cameraImage = ima.clone();
+
+    cv::Mat im = cameraImage.clone();
 
     /*
     cv::Mat hlsChannels[3];
@@ -85,22 +91,23 @@ void marbleDetect::drawCircle(ConstImageStampedPtr &msg)
     int center_x = im.cols/2;
     int center_y = im.rows/2;
     cv:: circle(im, cv::Point(center_x, center_y), 2, cv::Scalar(150), -1, 8, 0);
-
-    cv::imshow("detected circles", im);
+    CircImage = im.clone();
+    //cv::imshow("detected circles", im);
 }
 
 float marbleDetect::getBlue()
 {
+    cv::Mat im = cameraImage.clone();
     int blueLeft = 0;
     int blueRight = 0;
-    for (int rows = cameraImage.rows*0.4; rows < cameraImage.rows*0.6; rows++)
+    for (int rows = im.rows*0.4; rows < im.rows*0.6; rows++)
     {
-        for (int cols = 0; cols < cameraImage.cols; cols++)
+        for (int cols = 0; cols < im.cols; cols++)
         {
-            int threshold = std::max(static_cast<int>(cameraImage.at<cv::Vec3b>(cv::Point(cols,rows))[1]), static_cast<int>(cameraImage.at<cv::Vec3b>(cv::Point(cols,rows))[2]))*1.8;
-            if(static_cast<int>(cameraImage.at<cv::Vec3b>(cv::Point(cols,rows))[0])>threshold)
+            int threshold = std::max(static_cast<int>(im.at<cv::Vec3b>(cv::Point(cols,rows))[1]), static_cast<int>(im.at<cv::Vec3b>(cv::Point(cols,rows))[2]))*1.8;
+            if(static_cast<int>(im.at<cv::Vec3b>(cv::Point(cols,rows))[0])>threshold)
             {
-                if(cols<cameraImage.cols*0.5)
+                if(cols<im.cols*0.5)
                 {
                     blueLeft++;
                 }

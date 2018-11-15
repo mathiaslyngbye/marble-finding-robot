@@ -11,11 +11,12 @@ class Localization
 public:
     Localization();
     void poseCallBack(ConstPosesStampedPtr &msg);
-    cv::Point getLocation();
+    double getLocation();
     float getDir();
 private:
     float dir;
-    cv::Point2f posf; //Position in meters from centre. Taken directly from poseCallback
+    //cv::Point2f posf; //Position in meters from centre. Taken directly from poseCallback
+    double posArr[2];
 };
 
 #endif // LOCALIZATION_H

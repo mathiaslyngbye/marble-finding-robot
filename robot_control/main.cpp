@@ -187,6 +187,7 @@ int main(int _argc, char **_argv)
 
         dir = controller.getOutput().direction;
     }
+    cv::imshow("detected circles", marbDetect.getCirc());
 
     // Generate a pose
     ignition::math::Pose3d pose(double(speed), 0, 0, 0, 0, double(dir));

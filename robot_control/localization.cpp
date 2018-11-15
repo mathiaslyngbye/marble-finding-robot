@@ -15,8 +15,10 @@ void Localization::poseCallBack(ConstPosesStampedPtr &msg)
     {
         if (msg->pose(i).name() == "pioneer2dx")
         {
-            posf.x = msg->pose(i).position().x();
-            posf.y = msg->pose(i).position().y();
+            //posf.x = msg->pose(i).position().x();
+            //posf.y = msg->pose(i).position().y();
+            posArr[0] = msg->pose(i).position().x();
+            posArr[1] = msg->pose(i).position().y();
 
             double w = msg->pose(i).orientation().w();
             double x = msg->pose(i).orientation().x();
@@ -33,7 +35,7 @@ float Localization::getDir()
     return dir;
 }
 
-cv::Point Localization::getLocation()
+double Localization::getLocation()
 {
-    return posf;
+    return posArr[1];
 }
