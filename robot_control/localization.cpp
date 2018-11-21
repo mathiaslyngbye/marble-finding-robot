@@ -35,7 +35,12 @@ float Localization::getDir()
     return dir;
 }
 
-double Localization::getLocation()
+double Localization::getLocationX()
+{
+    return posArr[0];
+}
+
+double Localization::getLocationY()
 {
     return posArr[1];
 }

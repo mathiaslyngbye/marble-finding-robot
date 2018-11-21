@@ -5,7 +5,7 @@
 
 #include <opencv2/opencv.hpp>
 
-
+#include "controller.h"
 #include "localization.h"
 #include "FuzzyDefault.h"
 #include "marbleDetect.h"
@@ -16,7 +16,6 @@ float lidar_ranges[200];
 float lidar_angles[200];
 float w_lidar_ranges[200];
 float w_lidar_angles[200];
-cv::Mat camera;
 
 static boost::mutex mutex;
 
@@ -137,8 +136,9 @@ int main(int _argc, char **_argv)
   float speed = 0.0;
   float dir = 0.0;
 
-  obstacle_avoidance controller;
-  controller.init_controller();
+  controller control;
+  obstacle_avoidance controller1;
+  controller1.init_controller();
   take_marble controller2;
   controller2.init_controller();
 
@@ -149,8 +149,6 @@ int main(int _argc, char **_argv)
   // Loop
   while (true) {
     gazebo::common::Time::MSleep(10);
-
-//    DrawCircle(camera);
 
     mutex.lock();
     cv::waitKey(1);
@@ -169,25 +167,33 @@ int main(int _argc, char **_argv)
         }
     }
 
-    if (true) //marble collection controller
+    mutex.lock();
+    if (marbDetect.marbleClose()) //Marble is right infront, just has to be collected... had issues with weird behavior on fuzzymarb close, can explain in report
     {
-        controller.setValues(sm_dist, sm_angl);
-        controller.process();
-
-        speed = controller.getOutput().speed;
-
-        dir = controller.getOutput().direction;
+        controller2.setValues(sm_dist, sm_angl, marbDetect.getMarb());
+        controller2.process();
+        dir = controller2.getOutput().direction;
+        speed = 0.5;
+    }
+    else if (marbDetect.getBlue() > 200 || marbDetect.getBlue() < -200) //marble collection controller
+    {
+        controller2.setValues(sm_dist, sm_angl, marbDetect.getMarb());
+        controller2.process();
+        speed = controller2.getOutput().speed;
+        dir = controller2.getOutput().direction;
     }
     else //obstacle avoidance controller
     {
-        controller.setValues(sm_dist, sm_angl);
-        controller.process();
-
-        speed = controller.getOutput().speed;
-
-        dir = controller.getOutput().direction;
+        controller1.setValues(sm_dist, sm_angl);
+        controller1.process();
+        speed = controller1.getOutput().speed;
+        dir = controller1.getOutput().direction;
     }
+    mutex.unlock();
+
+    mutex.lock();
     cv::imshow("detected circles", marbDetect.getCirc());
+    mutex.unlock();
 
     // Generate a pose
     ignition::math::Pose3d pose(double(speed), 0, 0, 0, 0, double(dir));

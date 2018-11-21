@@ -11,7 +11,8 @@ class Localization
 public:
     Localization();
     void poseCallBack(ConstPosesStampedPtr &msg);
-    double getLocation();
+    double getLocationX();
+    double getLocationY();
     float getDir();
 private:
     float dir;

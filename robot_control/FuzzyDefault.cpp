@@ -193,11 +193,11 @@ void take_marble::init_controller()
     marbleC->setName("marbleC");
     marbleC->setDescription("");
     marbleC->setEnabled(true);
-    marbleC->setRange(-200, 200);
+    marbleC->setRange(-255, 255);
     marbleC->setLockValueInRange(false);
-    marbleC->addTerm(new Ramp("posLong", 30, 200));
+    marbleC->addTerm(new Ramp("posLong", 30, 255));
     marbleC->addTerm(new Triangle("close", -55, 0, 55));
-    marbleC->addTerm(new Ramp("negLong", -30, -200));
+    marbleC->addTerm(new Ramp("negLong", -30, -255));
     engine->addInputVariable(marbleC);
 
     //Ruleblock:
