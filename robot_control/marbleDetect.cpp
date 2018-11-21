@@ -60,13 +60,12 @@ int marbleDetect::getMarb()
         float length = 0;
         if (!circBuffer.isEmpty() && circles.size())
         {
-            // Calculate distance to center
-            cv::Vec3f largestC = {0, 0, 0};
+            cv::Vec3f marb = {0, 0, 0};
             for (int i = 0; i < circles.size(); i++)
             {
-                largestC = (circles[i][2] > largestC[2]) ? circles[i] : largestC;
+                marb = (circles[i][2] > marb[2]) ? circles[i] : marb;
             }
-            length = (largestC[0]-center_x > 0) ? std::sqrt(std::pow(largestC[0]-center_x, 2) + std::pow(largestC[1]-center_y, 2)) : -1*std::sqrt(std::pow(largestC[0]-center_x, 2) + std::pow(largestC[1]-center_y, 2));
+            length = (marb[0]-center_x > 0) ? std::sqrt(std::pow(marb[0]-center_x, 2) + std::pow(marb[1]-center_y, 2)) : -1*std::sqrt(std::pow(marb[0]-center_x, 2) + std::pow(marb[1]-center_y, 2));
         }
         return length;
     }
