@@ -167,6 +167,17 @@ int main(int _argc, char **_argv)
         }
     }
 
+    /*                                              POINT TO POINT NAVIGATION */
+    control.setPosX(locator.getLocationX());
+    control.setPosY(locator.getLocationY());
+    control.setDir(locator.getDir());
+
+    control.movePoint(3, 2);
+    dir = control.getDir();
+    speed = control.getSpeed();
+
+
+    /*                                              Fuzzy logic driving + marbCollection
     mutex.lock();
     if (marbDetect.marbleClose()) //Marble is right infront, just has to be collected... had issues with weird behavior on fuzzymarb close, can explain in report
     {
@@ -190,6 +201,7 @@ int main(int _argc, char **_argv)
         dir = controller1.getOutput().direction;
     }
     mutex.unlock();
+    */
 
     mutex.lock();
     cv::imshow("detected circles", marbDetect.getCirc());

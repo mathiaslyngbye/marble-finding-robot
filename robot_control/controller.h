@@ -11,12 +11,16 @@ public:
     float getDir();
     float getSpeed();
     void setDir(float dir);
-    void setSpeed(float speed);
+    void setPosX(double posX);
+    void setPosY(double posY);
+
+    bool worked();
 private:
     float speed;
     float dir;
     float currDir;
-    float currSpeed;
+    double currX;
+    double currY;
 };
 
 #endif // CONTROLLER_H
