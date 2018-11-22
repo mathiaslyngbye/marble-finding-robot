@@ -152,7 +152,7 @@ vector<Point> Pathplanner::getPath(Point src, Point dst)
 
 
         // Colorize path for aesthetic purposes.
-        image_path.at<Vec3b>(current_point)[INDEX_MISC] = COLORVAL_MIN;
+        //image_path.at<Vec3b>(current_point)[INDEX_MISC] = COLORVAL_MIN;
         //cout << image_path.at<Vec3b>(current_point)<< endl;
 
         // Set current point so smallest surrounding point.
