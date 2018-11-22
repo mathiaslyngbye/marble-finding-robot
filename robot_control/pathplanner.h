@@ -17,7 +17,9 @@ public:
     Mat getPathImage();
     vector<Point> getEndPoints();
     vector<Point> getPathPoints();
+    vector<Point> getPath(Point,Point);
 private:
+    void pathFinder(Point,int);
     void brushfire();
     void pathLocalMaxima();
     void pathPreClean();

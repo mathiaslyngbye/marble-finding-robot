@@ -26,9 +26,16 @@ Pathplanner::Pathplanner()
 
 Pathplanner::Pathplanner(Mat _image)
 {
+    // Imported image.
     image = _image;
+
+    // Clone image for brushfire algorithm.
     image_brushfire = _image.clone();
+
+    // Clone image for path drawing.
     image_path = _image.clone();
+
+    // Security variable.
     isCalculated = false;
 }
 
@@ -71,6 +78,121 @@ vector<Point> Pathplanner::getPathPoints()
     }
 }
 
+vector<Point> Pathplanner::getPath(Point src, Point dst)
+{
+
+    // Establish test variable.
+    bool abort = false;
+
+    // Test if source is located on path.
+    if((image_path.at<Vec3b>(src)[INDEX_PATH] != COLORVAL_PATH))
+    {
+        cout << "Pathplanner:\tSource " << src << " not part of path." << endl;
+        abort = true;
+    }
+
+    // Test if destination is located on path.
+    if((image_path.at<Vec3b>(dst)[INDEX_PATH] != COLORVAL_PATH))
+    {
+        cout << "Pathplanner:\tDestination " << dst << " not part of path." << endl;
+        abort = true;
+    }
+
+    // If either point is not on path, abort.
+    if(abort)
+    {
+        cout << "Aborting..." << endl;
+        return pathPoints;
+    }
+
+    // Run recursive simplified A* algorithm.
+    pathFinder(src, 1);
+
+    // Create vector for storing path points.
+    vector<Point> myPath;
+
+    // Initialize pathfinding at destination.
+    Point current_point = dst;
+    Point tmp_point = dst;
+
+    // While source is not reached...
+    while(current_point != src)
+    //for(int i = 0; i< 200; i++)
+    {
+        // Store current point.
+        myPath.insert(myPath.begin(),current_point);
+
+        // Initialize test point.
+        tmp_point = current_point;
+
+        // For all surrounding pixels...
+        for(int i = 0; i < 8; i++)
+        {
+            // If A* value is smaller than smallest surrounding value yet...
+            if(image_path.at<Vec3b>(Point(current_point.x+x_seq[i], current_point.y+y_seq[i]))[INDEX_BRUSHFIRE]
+                    < ((image_path.at<Vec3b>(current_point)[INDEX_BRUSHFIRE])))
+            {
+                // Save that value as test point.
+                tmp_point = Point(current_point.x+x_seq[i], current_point.y+y_seq[i]);
+            }
+        }
+
+        // In case of no point is found (bad apple)
+        if(tmp_point == current_point)
+        {
+            //cout << "Pathplanner:\tDistance error! " << image_path.at<Vec3b>(current_point) << endl;
+
+            // For all surrounding pixels...
+            for(int i = 0; i < 8; i++)
+            {
+                // Create fix here if problem is ever encountered.
+                //cout << image_path.at<Vec3b>(Point(current_point.x+x_seq[i], current_point.y+y_seq[i])) << endl;
+            }
+        }
+
+
+        // Colorize path for aesthetic purposes.
+        image_path.at<Vec3b>(current_point)[INDEX_MISC] = COLORVAL_MIN;
+        //cout << image_path.at<Vec3b>(current_point)<< endl;
+
+        // Set current point so smallest surrounding point.
+        current_point = tmp_point;
+    }
+
+    /*
+    // Clean path of A* values.
+    for(uint i = 0; i<pathPoints.size(); i++)
+    {
+        image_path.at<Vec3b>(pathPoints[i])[INDEX_BRUSHFIRE] = COLORVAL_MAX;
+    }
+    */
+
+    // Return resulting array of path points.
+    return myPath;
+}
+
+void Pathplanner::pathFinder(Point point, int distance)
+{
+
+    if(image_path.at<Vec3b>(point)[INDEX_BRUSHFIRE]<=255)
+    {
+        if(image_path.at<Vec3b>(point)[INDEX_BRUSHFIRE]<distance)
+        {
+            return;
+        }
+    }
+
+    //pathvalues[point.x][point.y] = distance;
+    image_path.at<Vec3b>(point)[INDEX_BRUSHFIRE] = distance;
+
+    for(int i = 0; i<8; i++)
+    {
+        if(image_path.at<Vec3b>(Point(point.x+x_seq[i], point.y+y_seq[i]))[INDEX_PATH] == COLORVAL_PATH)
+        {
+            pathFinder(Point(point.x+x_seq[i], point.y+y_seq[i]), distance+1);
+        }
+    }
+}
 
 void Pathplanner::calculatePath()
 {
@@ -81,20 +203,20 @@ void Pathplanner::calculatePath()
     }
 
     brushfire();
-    cout << "Brushfire complete..." << endl;
+    cout << "Pathplanner:\tBrushfire complete..." << endl;
     pathLocalMaxima();
-    cout << "Local maxima found..." << endl;
+    cout << "Pathplanner:\tLocal maxima found..." << endl;
     pathPreClean();
-    cout << "First path cleaning complete..." << endl;
+    cout << "Pathplanner:\tFirst path cleaning complete..." << endl;
     pathConnect();
-    cout << "Path routing complete..." << endl;
+    cout << "Pathplanner:\tPath routing complete..." << endl;
     pathPostClean();
-    cout << "Second path cleaning complete..." << endl;
+    cout << "Pathplanner:\tSecond path cleaning complete..." << endl;
     storePoints();
-    cout << "Pathpoints and endpoints stored..." << endl;
+    cout << "Pathplanner:\tPathpoints and endpoints stored..." << endl;
 
     isCalculated = true;
-    cout << "Path calculated successfully!" << endl;
+    cout << "Pathplanner:\tPath calculated successfully!" << endl;
 }
 
 bool Pathplanner::hasWhite()
@@ -470,7 +592,7 @@ void Pathplanner::storePoints()
 
                 if((pixelPath == 1))
                 {
-                    image_path.at<Vec3b>(Point(cols,rows))[INDEX_MISC] = COLORVAL_MISC;
+                    //image_path.at<Vec3b>(Point(cols,rows))[INDEX_MISC] = COLORVAL_MISC;
                     endPoints.push_back(Point(cols,rows));
                 }
             }
