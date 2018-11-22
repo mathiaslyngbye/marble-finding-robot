@@ -32,41 +32,32 @@ void controller::setPosY(double curreY)
     currY = roundf(curreY * 10) / 10;
 }
 
-void controller::movePoint(int x, int y)
+void controller::movePoint(double x, double y)
 {
-    int mode = 0;
     float thetaHat = std::atan2((y-currY),(x-currX));
 
-    float goalDir = roundf(thetaHat * 10) / 10;
+    float goalDir = (roundf(thetaHat * 10) / 10);
 
-    if (currDir != goalDir)
+    double dirChange = getDifference(currDir + 3.14, goalDir);
+    speed = 0.40;
+    if (dirChange > 0)
     {
-        mode = 1;
-        speed = 0.15;
-        if (currDir > goalDir+0.3)
-        {
-            dir = 0.4;
-        }
-        else if (currDir < goalDir-0.3)
-        {
-            dir = -0.4;
-        }
-        else if (currDir > goalDir)
-        {
-            dir = 0.1;
-        }
-        else if (currDir < goalDir)
-        {
-            dir = -0.1;
-        }
+        dir = 0.4;
     }
+    else if (dirChange < 0)
+    {
+        dir = -0.4;
+    }
+    std::cout << "goal dir: " << goalDir << " current dir: " << currDir << std::endl;
+    std::cout << "x: " << currX << ", " << x << " y: " << currY << ", " << y << std::endl;
+}
 
-    if (mode == 0)
-    {
-        if ((currX != x && currY != y) || currX != x || currY != y)
-        {
-            dir = 0;
-            speed = 0.5;
-        }
-    }
+double controller::getDifference(double b1, double b2)
+{
+    double r = fmod(b2 - b1, 6.28);
+    if (r < -3.14)
+        r += 6.28;
+    if (r >= 3.14)
+        r -= 6.28;
+    return r;
 }
