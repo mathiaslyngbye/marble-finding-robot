@@ -1,6 +1,7 @@
 #include "pathplanner.h"
 
 // Sequences used for checking surrounding pixels (clockwise)
+// Note: Direction on map is flipped due to the nature of matrices.
 const int x_seq[8] = {0,1,1,1,0,-1,-1,-1};
 const int y_seq[8] = {1,1,0,-1,-1,-1,0,1};
 
@@ -47,7 +48,8 @@ Mat Pathplanner::getPathImage()
     }
     else
     {
-        cout << "Path not yet calculated. Please perform 'calculatePath()' before using this function." << endl;
+        cout << "Pathplanner:\tPath not yet calculated. ";
+        cout << "Please perform 'calculatePath()'." << endl;
         return image;
     }
 }
@@ -60,7 +62,8 @@ vector<Point> Pathplanner::getEndPoints()
     }
     else
     {
-        cout << "Path not yet calculated. Please perform 'calculatePath()' before using this function." << endl;
+        cout << "Pathplanner:\tPath not yet calculated. ";
+        cout << "Please perform 'calculatePath()'." << endl;
         return endPoints;
     }
 }
@@ -73,7 +76,8 @@ vector<Point> Pathplanner::getPathPoints()
     }
     else
     {
-        cout << "Path not yet calculated. Please perform 'calculatePath()' before using this function." << endl;
+        cout << "Pathplanner:\tPath not yet calculated. ";
+        cout << "Please perform 'calculatePath()'." << endl;
         return pathPoints;
     }
 }
@@ -101,7 +105,7 @@ vector<Point> Pathplanner::getPath(Point src, Point dst)
     // If either point is not on path, abort.
     if(abort)
     {
-        cout << "Aborting..." << endl;
+        cout << "Pathplanner:\tAborting..." << endl;
         return pathPoints;
     }
 
@@ -140,7 +144,7 @@ vector<Point> Pathplanner::getPath(Point src, Point dst)
         // In case of no point is found (bad apple)
         if(tmp_point == current_point)
         {
-            //cout << "Pathplanner:\tDistance error! " << image_path.at<Vec3b>(current_point) << endl;
+            cout << "Pathplanner:\tDistance error! " << image_path.at<Vec3b>(current_point) << endl;
 
             // For all surrounding pixels...
             for(int i = 0; i < 8; i++)
@@ -150,22 +154,16 @@ vector<Point> Pathplanner::getPath(Point src, Point dst)
             }
         }
 
-
-        // Colorize path for aesthetic purposes.
-        //image_path.at<Vec3b>(current_point)[INDEX_MISC] = COLORVAL_MIN;
-        //cout << image_path.at<Vec3b>(current_point)<< endl;
-
         // Set current point so smallest surrounding point.
         current_point = tmp_point;
     }
 
-    /*
+
     // Clean path of A* values.
     for(uint i = 0; i<pathPoints.size(); i++)
     {
         image_path.at<Vec3b>(pathPoints[i])[INDEX_BRUSHFIRE] = COLORVAL_MAX;
     }
-    */
 
     // Return resulting array of path points.
     return myPath;
@@ -174,15 +172,11 @@ vector<Point> Pathplanner::getPath(Point src, Point dst)
 void Pathplanner::pathFinder(Point point, int distance)
 {
 
-    if(image_path.at<Vec3b>(point)[INDEX_BRUSHFIRE]<=255)
+    if(image_path.at<Vec3b>(point)[INDEX_BRUSHFIRE]<distance)
     {
-        if(image_path.at<Vec3b>(point)[INDEX_BRUSHFIRE]<distance)
-        {
-            return;
-        }
+        return;
     }
 
-    //pathvalues[point.x][point.y] = distance;
     image_path.at<Vec3b>(point)[INDEX_BRUSHFIRE] = distance;
 
     for(int i = 0; i<8; i++)
@@ -198,7 +192,7 @@ void Pathplanner::calculatePath()
 {
     if(isCalculated)
     {
-        cout << "Path already calculated, aborting..." << endl;
+        cout << "Pathplanner:\tPath already calculated, aborting..." << endl;
         return;
     }
 
@@ -276,7 +270,8 @@ void Pathplanner::pathLocalMaxima()
 
                 for(int i = 0; i<8;i++)
                 {
-                    if((image_brushfire.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i])))[INDEX_BRUSHFIRE] > image_brushfire.at<Vec3b>(Point(cols,rows))[INDEX_BRUSHFIRE]))
+                    if((image_brushfire.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i])))[INDEX_BRUSHFIRE]
+                        > image_brushfire.at<Vec3b>(Point(cols,rows))[INDEX_BRUSHFIRE]))
                     {
                         smallest = false;
                     }
@@ -495,7 +490,9 @@ void Pathplanner::pathConnect()
 
                             pointCurrent = Point((cols+x_seq[seqIndexNew]),(rows+y_seq[seqIndexNew]));
                             pathCurrentVal = image_brushfire.at<Vec3b>(Point((cols+x_seq[seqIndexNew]),(rows+y_seq[seqIndexNew])))[INDEX_BRUSHFIRE];
-                            if((foundSame == false) && (image_brushfire.at<Vec3b>(pointCurrent)[INDEX_BRUSHFIRE] >= image_brushfire.at<Vec3b>(pointNext)[INDEX_BRUSHFIRE]))
+                            if((foundSame == false)
+                                    && (image_brushfire.at<Vec3b>(pointCurrent)[INDEX_BRUSHFIRE]
+                                        >= image_brushfire.at<Vec3b>(pointNext)[INDEX_BRUSHFIRE]))
                             {
                                 pathLargestVal = pathCurrentVal;
                                 pointNext = Point((cols+x_seq[seqIndexNew]),(rows+y_seq[seqIndexNew]));
@@ -540,7 +537,8 @@ void Pathplanner::pathPostClean()
 
                 for(int i = 0; i<8; i++)
                 {
-                    if(image_path.at<Vec3b>(Point(cols+x_seq[i],rows+y_seq[i]))[INDEX_PATH] == COLORVAL_PATH)
+                    if(image_path.at<Vec3b>(Point(cols+x_seq[i],rows+y_seq[i]))[INDEX_PATH]
+                            == COLORVAL_PATH)
                     {
                         index2 = index1;
                         index1 = i;
@@ -548,14 +546,9 @@ void Pathplanner::pathPostClean()
                     }
                 }
 
-                // I JUST FOUND OUT THAT THE CHECK SEQUENCE IS FLIPPED ON BOTH AXIS;
-                // THUS THE FOLLOWING CODE MAY LOOK ODD.
-
+                // Remember that the sequence is flipped...
                 if(pixelPath == 2)
                 {
-                    //cout << "Found something: " << index1 << ':' << index2 << endl;
-                    //image_path.at<Vec3b>(Point(cols,rows))[INDEX_MISC] = COLORVAL_MISC;
-
                     if(((index1 == 2) && (index2 == 1))||((index1 == 4) && (index2 == 3)))
                     {
                         image_path.at<Vec3b>(Point(cols,rows))[INDEX_PATH] = COLORVAL_MAX;
@@ -592,7 +585,6 @@ void Pathplanner::storePoints()
 
                 if((pixelPath == 1))
                 {
-                    //image_path.at<Vec3b>(Point(cols,rows))[INDEX_MISC] = COLORVAL_MISC;
                     endPoints.push_back(Point(cols,rows));
                 }
             }
