@@ -9,6 +9,7 @@
 #include "localization.h"
 #include "FuzzyDefault.h"
 #include "marbleDetect.h"
+#include "locationmap.h"
 #include <iostream>
 
 // Common variables
@@ -133,6 +134,8 @@ int main(int _argc, char **_argv)
   worldPublisher->WaitForConnection();
   worldPublisher->Publish(controlMessage);
 
+  //=============================================
+
   float speed = 0.0;
   float dir = 0.0;
 
@@ -142,12 +145,27 @@ int main(int _argc, char **_argv)
   take_marble controller2;
   controller2.init_controller();
 
+  // Create Window for LocationMap
+  cv::namedWindow("Location Map", cv::WINDOW_AUTOSIZE);	// Create a window.
+
+  // Import image
+  std::string floor_plan_JPG("../models/bigworld/meshes/floor_plan.png");
+  cv::Mat floor_plan;
+  floor_plan = cv::imread(floor_plan_JPG, cv::IMREAD_COLOR);
+
+  // Create location map
+  cv::Mat floor_plan_location = floor_plan;
+  cv::resize(floor_plan, floor_plan_location, cv::Size(), 3, 3);
+  LocationMap myMap(floor_plan_location);
+  cv::Mat myLocationMap = myMap.myLocation(0,0,0);
+
   // Fuzzy Controller variables
   float sm_dist = 10;
   float sm_angl = 0;
 
   // Loop
-  while (true) {
+  while (true)
+  {
     gazebo::common::Time::MSleep(10);
 
     mutex.lock();
@@ -158,6 +176,7 @@ int main(int _argc, char **_argv)
     sm_dist = 10;
     sm_angl = 0;
 
+    // Find smallest angle
     for (int i = 30; i<170;i++)
     {
         if (lidar_ranges[i]<sm_dist)
@@ -167,7 +186,9 @@ int main(int _argc, char **_argv)
         }
     }
 
-    /*                                              POINT TO POINT NAVIGATION */
+
+    // POINT TO POINT NAVIGATION
+    /*
     control.setPosX(locator.getLocationX());
     control.setPosY(locator.getLocationY());
     control.setDir(locator.getDir());
@@ -175,9 +196,10 @@ int main(int _argc, char **_argv)
     control.movePoint(3, 2);
     dir = control.getDir();
     speed = control.getSpeed();
+    */
 
-
-    /*                                              Fuzzy logic driving + marbCollection
+    // Fuzzy logic driving + marbCollection
+    /*
     mutex.lock();
     if (marbDetect.marbleClose()) //Marble is right infront, just has to be collected... had issues with weird behavior on fuzzymarb close, can explain in report
     {
@@ -203,8 +225,13 @@ int main(int _argc, char **_argv)
     mutex.unlock();
     */
 
+    // Generate location map
+    myLocationMap = myMap.myLocation(locator.getLocationX(),locator.getLocationY(),locator.getDir());
+
+    // Show images
     mutex.lock();
     cv::imshow("detected circles", marbDetect.getCirc());
+    cv::imshow("Location Map", myLocationMap);
     mutex.unlock();
 
     // Generate a pose
