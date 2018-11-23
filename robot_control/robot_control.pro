@@ -9,7 +9,8 @@ SOURCES += main.cpp \
     marbleDetect.cpp \
     pathplanner.cpp \
     buffer.cpp \
-    controller.cpp
+    controller.cpp \
+    locationmap.cpp
 
 CONFIG += link_pkgconfig
 PKGCONFIG += gazebo
@@ -22,7 +23,8 @@ HEADERS += \
     marbleDetect.h \
     pathplanner.h \
     buffer.h \
-    controller.h
+    controller.h \
+    locationmap.h
 
 # Library: FuzzyLite
 INCLUDEPATH += $$PWD/../../marble-finding-robot/libraries/fuzzylite-6.0/fuzzylite
