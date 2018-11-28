@@ -5,21 +5,18 @@
 //#include <vector>
 #include <opencv2/opencv.hpp>
 
-using namespace std;
-using namespace cv;
-
 class Pathplanner
 {
 public:
     Pathplanner();
-    Pathplanner(Mat);
+    Pathplanner(cv::Mat);
     void calculatePath();
-    Mat getPathImage();
-    vector<Point> getEndPoints();
-    vector<Point> getPathPoints();
-    vector<Point> getPath(Point,Point);
+    cv::Mat getPathImage();
+    std::vector<cv::Point> getEndPoints();
+    std::vector<cv::Point> getPathPoints();
+    std::vector<cv::Point> getPath(cv::Point,cv::Point);
 private:
-    void pathFinder(Point,int);
+    void pathFinder(cv::Point,int);
     void brushfire();
     void pathLocalMaxima();
     void pathPreClean();
@@ -28,12 +25,12 @@ private:
     void pathEnds();
     bool hasWhite();
     void storePoints();
-    Mat image;
-    Mat image_brushfire;
-    Mat image_path;
+    cv::Mat image;
+    cv::Mat image_brushfire;
+    cv::Mat image_path;
     bool isCalculated;
-    vector<Point> endPoints;
-    vector<Point> pathPoints;
+    std::vector<cv::Point> endPoints;
+    std::vector<cv::Point> pathPoints;
 };
 
 #endif // PATHPLANNER_H

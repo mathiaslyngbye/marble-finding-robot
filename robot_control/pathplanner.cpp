@@ -1,5 +1,8 @@
 #include "pathplanner.h"
 
+using namespace std;
+using namespace cv;
+
 // Sequences used for checking surrounding pixels (clockwise)
 // Note: Direction on map is flipped due to the nature of matrices.
 const int x_seq[8] = {0,1,1,1,0,-1,-1,-1};

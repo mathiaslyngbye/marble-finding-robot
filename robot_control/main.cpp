@@ -5,6 +5,7 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "pathplanner.h"
 #include "controller.h"
 #include "localization.h"
 #include "FuzzyDefault.h"
@@ -139,14 +140,7 @@ int main(int _argc, char **_argv)
   float speed = 0.0;
   float dir = 0.0;
 
-  controller control;
-  obstacle_avoidance controller1;
-  controller1.init_controller();
-  take_marble controller2;
-  controller2.init_controller();
-
-  // Create Window for LocationMap
-  cv::namedWindow("Location Map", cv::WINDOW_AUTOSIZE);	// Create a window.
+  int mode = 0;
 
   // Import image
   std::string floor_plan_JPG("../models/bigworld/meshes/floor_plan.png");
@@ -159,9 +153,42 @@ int main(int _argc, char **_argv)
   LocationMap myMap(floor_plan_location);
   cv::Mat myLocationMap = myMap.myLocation(0,0,0);
 
+  Pathplanner pathplan(floor_plan);
+
+  pathplan.calculatePath();
+  controller control;
+  obstacle_avoidance controller1;
+  controller1.init_controller();
+  take_marble controller2;
+  controller2.init_controller();
+
+  // Create Window for LocationMap
+  cv::namedWindow("Location Map", cv::WINDOW_AUTOSIZE);	// Create a window.
+
   // Fuzzy Controller variables
   float sm_dist = 10;
   float sm_angl = 0;
+
+  std::vector<cv::Point> firstPath;
+  firstPath = pathplan.getPathPoints();
+  double locaX = locator.getLocationX();
+  double locaY = locator.getLocationY();
+  double distance = 100;
+  double tempDist = 0;
+  int startX = 0;
+  int startY = 0;
+  for (int ii = 0; ii < firstPath.size(); ii++)
+  {
+      tempDist = std::sqrt(((firstPath[ii].x - locaX) * (firstPath[ii].x - locaX)) + ((firstPath[ii].y - locaY) * (firstPath[ii].y - locaY)));
+      if (tempDist < distance)
+      {
+          distance = tempDist;
+          startX = firstPath[ii].x;
+          startY = firstPath[ii].y;
+      }
+  }
+
+  std::vector<cv::Point> drivePath;
 
   // Loop
   while (true)
@@ -186,6 +213,46 @@ int main(int _argc, char **_argv)
         }
     }
 
+    if (mode == 0)
+    {
+        control.setPosX(locator.getLocationX());
+        control.setPosY(locator.getLocationY());
+        control.setDir(locator.getDir());
+
+        control.movePoint(startX, startY);
+        dir = control.getDir();
+        speed = control.getSpeed();
+        if (locator.getLocationX() == startX && locator.getLocationY() == startY)
+        {
+            mode = 1;
+        }
+    }
+
+    if (mode == 1)
+    {
+        std::vector<cv::Point> endPoints = pathplan.getEndPoints();
+        cv::Point startPos;
+        startPos.x = startX;
+        startPos.y = startY;
+        drivePath = pathplan.getPath(startPos,endPoints[2]);
+        mode = 2;
+    }
+
+    if (mode == 2)
+    {
+        if (control.getActive() == 0)
+        {
+            control.moveVector(drivePath);
+        }
+    }
+
+    //Move between endpoints with vector
+    /*
+    if (control.getActive() == 0)
+    {
+        control.moveVector();
+    }
+    */
 
     // POINT TO POINT NAVIGATION
     /*
