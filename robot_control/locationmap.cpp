@@ -11,16 +11,17 @@ LocationMap::LocationMap()
 LocationMap::LocationMap(cv::Mat _image)
 {
     image = _image;
-    scale = image.cols / 86.0;
 }
 
 void LocationMap::setImage(cv::Mat _image)
 {
     image = _image;
-    scale = image.cols / 86.0;
 }
 cv::Mat LocationMap::myLocation(double x,double y, double theta)
 {
+    // Get scale
+    double scale = image.cols / 86.0;
+
     // Clone image.
     cv::Mat image_location = image.clone();
 
@@ -56,6 +57,9 @@ cv::Mat LocationMap::myLocation(double x,double y, double theta)
 
 std::array<double,2> LocationMap::getCoordsXY(cv::Point _point)
 {
+    // Get scale
+    double scale = 120 / 86.0;
+
     // Calculate offset coordinates.
     double local_x = ((_point.x)-(0.5*image.cols))/scale;
     double local_y = ((0.5*image.rows)-(_point.y))/scale;
@@ -69,6 +73,9 @@ std::array<double,2> LocationMap::getCoordsXY(cv::Point _point)
 
 cv::Point LocationMap::getCoordsPoint(double x,double y)
 {
+    // Get scale
+    double scale = 120 / 86.0;
+
     // Calculate offset coordinates.
     double local_x = scale*x+(0.5*image.cols);
     double local_y = scale*(-y)+(0.5*image.rows);
