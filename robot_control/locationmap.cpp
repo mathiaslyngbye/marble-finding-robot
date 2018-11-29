@@ -57,12 +57,16 @@ cv::Mat LocationMap::myLocation(double x,double y, double theta)
 
 std::array<double,2> LocationMap::getCoordsXY(cv::Point _point)
 {
-    // Get scale
-    double scale = 120 / 86.0;
+    // Define source width and height.
+    int height = 80;
+    int width = 120;
+
+    // Determine scale.
+    double scale = width / 86.0;
 
     // Calculate offset coordinates.
-    double local_x = ((_point.x)-(0.5*image.cols))/scale;
-    double local_y = ((0.5*image.rows)-(_point.y))/scale;
+    double local_x = ((_point.x)-(0.5*width))/scale;
+    double local_y = ((0.5*height)-(_point.y))/scale;
 
     // Create Array of calculated coordiantes.
     std::array<double,2> myCoords = {local_x, local_y};
@@ -73,12 +77,16 @@ std::array<double,2> LocationMap::getCoordsXY(cv::Point _point)
 
 cv::Point LocationMap::getCoordsPoint(double x,double y)
 {
-    // Get scale
-    double scale = 120 / 86.0;
+    // Define source width and height.
+    int height = 80;
+    int width = 120;
+
+    // Determine scale.
+    double scale = width / 86.0;
 
     // Calculate offset coordinates.
-    double local_x = scale*x+(0.5*image.cols);
-    double local_y = scale*(-y)+(0.5*image.rows);
+    double local_x = scale*x+(0.5*width);
+    double local_y = scale*(-y)+(0.5*height);
 
     // Rerturn calculated point.
     return cv::Point(local_x, local_y);
