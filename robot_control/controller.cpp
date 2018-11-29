@@ -59,17 +59,19 @@ void controller::movePoint(double x, double y)
 
 void controller::moveVector(std::vector<cv::Point> points)
 {
-    active = 1;
     std::vector<cv::Point> localPoints;
     localPoints = points;
-    movePoint(localPoints[0].x, localPoints[0].y);
-    if (currX == localPoints[0].x && currY == localPoints[0].y)
+    if (!localPoints.empty())
     {
-        localPoints.erase(localPoints.begin());
-    }
-    if (localPoints.empty())
-    {
-        active = 0;
+        movePoint(localPoints[0].x, localPoints[0].y);
+        if (currX == localPoints[0].x && currY == localPoints[0].y)
+        {
+            localPoints.erase(localPoints.begin());
+        }
+        if (localPoints.empty())
+        {
+            active = 0;
+        }
     }
 }
 

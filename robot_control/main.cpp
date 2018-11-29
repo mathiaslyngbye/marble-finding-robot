@@ -148,8 +148,8 @@ int main(int _argc, char **_argv)
   floor_plan = cv::imread(floor_plan_JPG, cv::IMREAD_COLOR);
 
   // Create location map
-  cv::Mat floor_plan_location = floor_plan;
-  cv::resize(floor_plan, floor_plan_location, cv::Size(), 3, 3);
+  cv::Mat floor_plan_location = floor_plan.clone();
+  //cv::resize(floor_plan, floor_plan_location, cv::Size(), 3, 3);
   LocationMap myMap(floor_plan_location);
   cv::Mat myLocationMap = myMap.myLocation(0,0,0);
 
@@ -175,18 +175,39 @@ int main(int _argc, char **_argv)
   double locaY = locator.getLocationY();
   double distance = 100;
   double tempDist = 0;
-  int startX = 0;
-  int startY = 0;
+  double startX = 0;
+  double startY = 0;
+
+   cv::namedWindow("Test Space", cv::WINDOW_AUTOSIZE);	// Create a window.
+   cv::Mat testImage = floor_plan.clone();
+   for(int index=0; index < firstPath.size(); index++)
+   {
+       testImage.at<cv::Vec3b>(firstPath[index]) = {0,0,255};
+       std::array<double,2> testPoint = myMap.getCoordsXY(firstPath[index]);
+       std::cout <<"Index: " << index <<"\tX: " << testPoint[0]  << ",\tY: " << testPoint[1] << std::endl;
+       std::cout <<"Index: " << index <<"\tPint: " << firstPath[index] << std::endl;
+   }
+
+   std::cout << "Path size: "<< firstPath.size() << std::endl;
+   mutex.lock();
+   cv::imshow("Test Space", testImage);
+   mutex.unlock();
+
+
+
   for (int ii = 0; ii < firstPath.size(); ii++)
   {
-      tempDist = std::sqrt(((firstPath[ii].x - locaX) * (firstPath[ii].x - locaX)) + ((firstPath[ii].y - locaY) * (firstPath[ii].y - locaY)));
+      std::array<double,2> myPoint = myMap.getCoordsXY(firstPath[ii]);
+      tempDist = std::sqrt(pow((myPoint[0] - locaX),2) + pow((myPoint[1] - locaY),2));
+      //std::cout << tempDist << "  x:  " << myPoint[0] << "  y:  " << myPoint[0] << std::endl;
       if (tempDist < distance)
       {
           distance = tempDist;
-          startX = firstPath[ii].x;
-          startY = firstPath[ii].y;
+          startX = myPoint[0];
+          startY = myPoint[1];
       }
   }
+  std::cout << distance << std::endl;
 
   std::vector<cv::Point> drivePath;
 
@@ -222,9 +243,11 @@ int main(int _argc, char **_argv)
         control.movePoint(startX, startY);
         dir = control.getDir();
         speed = control.getSpeed();
+        //std::cout << startX << " : " << startY << std::endl;
         if (locator.getLocationX() == startX && locator.getLocationY() == startY)
         {
             mode = 1;
+            std::cout << "Found the path" << std::endl;
         }
     }
 
@@ -236,10 +259,12 @@ int main(int _argc, char **_argv)
         startPos.y = startY;
         drivePath = pathplan.getPath(startPos,endPoints[2]);
         mode = 2;
+        std::cout << "calculated path" << std::endl;
     }
 
     if (mode == 2)
     {
+        std::cout << "Driving path" << std::endl;
         if (control.getActive() == 0)
         {
             control.moveVector(drivePath);
