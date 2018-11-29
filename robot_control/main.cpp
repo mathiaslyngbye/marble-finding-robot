@@ -178,9 +178,10 @@ int main(int _argc, char **_argv)
   double startX = 0;
   double startY = 0;
 
+  // MALYS TEST SPACE
    cv::namedWindow("Test Space", cv::WINDOW_AUTOSIZE);	// Create a window.
    cv::Mat testImage = floor_plan.clone();
-   for(int index=0; index < firstPath.size(); index++)
+  /* for(int index=0; index < firstPath.size(); index++)
    {
        testImage.at<cv::Vec3b>(firstPath[index]) = {0,0,255};
        std::array<double,2> testPoint = myMap.getCoordsXY(firstPath[index]);
@@ -192,24 +193,27 @@ int main(int _argc, char **_argv)
    mutex.lock();
    cv::imshow("Test Space", testImage);
    mutex.unlock();
-
-
+*/
+   // END OF MALYS TEST SPACE
+  std::array<double,2> myPoint;
 
   for (int ii = 0; ii < firstPath.size(); ii++)
   {
-      std::array<double,2> myPoint = myMap.getCoordsXY(firstPath[ii]);
+      myPoint = myMap.getCoordsXY(firstPath[ii]);
       tempDist = std::sqrt(pow((myPoint[0] - locaX),2) + pow((myPoint[1] - locaY),2));
       //std::cout << tempDist << "  x:  " << myPoint[0] << "  y:  " << myPoint[0] << std::endl;
       if (tempDist < distance)
       {
           distance = tempDist;
-          startX = myPoint[0];
-          startY = myPoint[1];
+          //startX = myPoint[0];
+          //startY = myPoint[1];
       }
   }
-  std::cout << distance << std::endl;
+  myPoint[0] = roundf(myPoint[0] * 10) / 10;
+  myPoint[1] = roundf(myPoint[1] * 10) / 10;
 
   std::vector<cv::Point> drivePath;
+  std::vector<std::array<double,2>> drivePathXY;
 
   // Loop
   while (true)
@@ -240,11 +244,12 @@ int main(int _argc, char **_argv)
         control.setPosY(locator.getLocationY());
         control.setDir(locator.getDir());
 
-        control.movePoint(startX, startY);
+        control.movePoint(myPoint);
         dir = control.getDir();
-        speed = control.getSpeed();
+        //speed = control.getSpeed();
+        speed = 0.05;
         //std::cout << startX << " : " << startY << std::endl;
-        if (locator.getLocationX() == startX && locator.getLocationY() == startY)
+        if ((locator.getLocationX() == startX) && (locator.getLocationY() == startY))
         {
             mode = 1;
             std::cout << "Found the path" << std::endl;
@@ -257,18 +262,40 @@ int main(int _argc, char **_argv)
         cv::Point startPos;
         startPos.x = startX;
         startPos.y = startY;
+        startPos = myMap.getCoordsPoint(startX,startY);
         drivePath = pathplan.getPath(startPos,endPoints[2]);
+
+        for (int p = 0; p < drivePath.size(); p++)
+        {
+            drivePathXY.insert(drivePathXY.begin(), myMap.getCoordsXY(drivePath[p]));
+        }
+
+        // DRAW TEST PATH
+        for(uint i = 0; i<drivePath.size();i++)
+        {
+            testImage.at<cv::Vec3b>(drivePath[i]) = {0,0,255};
+        }
+        mutex.lock();
+        cv::imshow("Test Space", testImage);
+        mutex.unlock();
+        // END OF DRAW TEST PATH
+
         mode = 2;
         std::cout << "calculated path" << std::endl;
     }
 
     if (mode == 2)
     {
+        control.setPosX(locator.getLocationX());
+        control.setPosY(locator.getLocationY());
+        control.setDir(locator.getDir());
+        speed = 0.2;
         std::cout << "Driving path" << std::endl;
         if (control.getActive() == 0)
         {
-            control.moveVector(drivePath);
+            control.moveVector(drivePathXY);
         }
+        dir = control.getDir();
     }
 
     //Move between endpoints with vector

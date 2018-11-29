@@ -29,22 +29,24 @@ void controller::setDir(float dirr)
 
 void controller::setPosX(double curreX)
 {
-    currX = roundf(curreX * 10) / 10;
+    currX = curreX;
 }
 
 void controller::setPosY(double curreY)
 {
-    currY = roundf(curreY * 10) / 10;
+    currY = curreY;
 }
 
-void controller::movePoint(double x, double y)
+void controller::movePoint(std::array<double, 2> point)
 {
+    double x = point[0];
+    double y = point[1];
     float thetaHat = std::atan2((y-currY),(x-currX));
 
     float goalDir = (roundf(thetaHat * 10) / 10);
 
     double dirChange = getDifference(currDir + 3.14, goalDir);
-    speed = 0.40;
+    //speed = 0.20;
     if (dirChange > 0)
     {
         dir = 0.4;
@@ -53,19 +55,20 @@ void controller::movePoint(double x, double y)
     {
         dir = -0.4;
     }
-    //std::cout << "goal dir: " << goalDir << " current dir: " << currDir << std::endl;
-    //std::cout << "x: " << currX << ", " << x << " y: " << currY << ", " << y << std::endl;
+    std::cout << "goal dir: " << goalDir << " current dir: " << currDir << std::endl;
+    std::cout << "x: " << currX << ", " << x << " y: " << currY << ", " << y << std::endl;
 }
 
-void controller::moveVector(std::vector<cv::Point> points)
+void controller::moveVector(std::vector<std::array<double, 2>> points)
 {
-    std::vector<cv::Point> localPoints;
+    std::vector<std::array<double, 2>> localPoints;
     localPoints = points;
     if (!localPoints.empty())
     {
-        movePoint(localPoints[0].x, localPoints[0].y);
-        if (currX == localPoints[0].x && currY == localPoints[0].y)
+        movePoint(localPoints[0]);
+        if (currX == localPoints[0][0] && currY == localPoints[0][1])
         {
+            localPoints.erase(localPoints.begin());
             localPoints.erase(localPoints.begin());
         }
         if (localPoints.empty())

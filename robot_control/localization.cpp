@@ -37,10 +37,12 @@ float Localization::getDir()
 
 double Localization::getLocationX()
 {
+    posArr[0] = roundf(posArr[0] * 10) / 10;
     return posArr[0];
 }
 
 double Localization::getLocationY()
 {
+    posArr[1] = roundf(posArr[1] * 10) / 10;
     return posArr[1];
 }

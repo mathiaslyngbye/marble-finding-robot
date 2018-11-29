@@ -8,8 +8,8 @@ class controller
 {
 public:
     controller();
-    void movePoint(double x, double y);
-    void moveVector(std::vector<cv::Point> points);
+    void movePoint(std::array<double, 2>);
+    void moveVector(std::vector<std::array<double, 2>> points);
     int getActive();
     float getDir();
     float getSpeed();
