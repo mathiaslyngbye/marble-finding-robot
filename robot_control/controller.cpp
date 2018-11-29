@@ -55,8 +55,10 @@ void controller::movePoint(std::array<double, 2> point)
     {
         dir = -0.4;
     }
-    std::cout << "goal dir: " << goalDir << " current dir: " << currDir << std::endl;
-    std::cout << "x: " << currX << ", " << x << " y: " << currY << ", " << y << std::endl;
+    std::cout << "Current d: " << currDir << "\t Goal d: " << goalDir << std::endl;
+    std::cout << "Current x: " << currX << "\tGoal x: " << x << std::endl;
+    std::cout << "Current y: " << currY << "\tGoal y: " << y << std::endl;
+    std::cout << std::endl;
 }
 
 void controller::moveVector(std::vector<std::array<double, 2>> points)
@@ -71,10 +73,10 @@ void controller::moveVector(std::vector<std::array<double, 2>> points)
             localPoints.erase(localPoints.begin());
             localPoints.erase(localPoints.begin());
         }
-        if (localPoints.empty())
-        {
-            active = 0;
-        }
+    }
+    if (localPoints.empty())
+    {
+        active = 0;
     }
 }
 
