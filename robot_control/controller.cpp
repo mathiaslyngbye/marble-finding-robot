@@ -63,10 +63,14 @@ void controller::movePoint(std::array<double, 2> point)
 
 void controller::moveVector(std::vector<std::array<double, 2>> points)
 {
-    std::vector<std::array<double, 2>> localPoints;
-    localPoints = points;
+    if (active == 0)
+    {
+        localPoints = points;
+    }
+
     if (!localPoints.empty())
     {
+        active = 1;
         movePoint(localPoints[0]);
         if (currX == localPoints[0][0] && currY == localPoints[0][1])
         {

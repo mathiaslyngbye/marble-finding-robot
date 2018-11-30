@@ -24,6 +24,7 @@ private:
     double currX;
     double currY;
     int active = 0;
+    std::vector<std::array<double, 2>> localPoints;
 };
 
 #endif // CONTROLLER_H

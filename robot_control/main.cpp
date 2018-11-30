@@ -100,6 +100,7 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
 
 int main(int _argc, char **_argv)
 {
+    //Declare classes to read call backs from Gazebo
     marbleDetect marbDetect;
     Localization locator;
 
@@ -137,10 +138,19 @@ int main(int _argc, char **_argv)
 
     //=============================================
 
+    enum driveMode
+    {
+        fuzzyObstacle,
+        fuzzyMarble,
+        pointsDriver,
+        endPointsDriver,
+        pathLocator,
+        pathCalc
+    };
+
+    //Declare floats for controlling robot
     float speed = 0.0;
     float dir = 0.0;
-
-    int mode = 0;
 
     // Import image: floor plan of big worlds
     std::string floor_plan_JPG("../models/bigworld/meshes/floor_plan.png");
@@ -170,6 +180,9 @@ int main(int _argc, char **_argv)
     controller1.init_controller();
     take_marble controller2;
     controller2.init_controller();
+
+    //Declare enum used to switch between modes
+    driveMode driver = pathLocator;
 
     // Establish variables used for finding closest point.
     double currentX = locator.getLocationX();   // Current X location
@@ -225,7 +238,7 @@ int main(int _argc, char **_argv)
         mutex.unlock();
 
         // Initialize driving; go to closes path point.
-        if (mode == 0)
+        if (driver == pathLocator)
         {
             // Update robot location and direction in controller.
             control.setPosX(locator.getLocationX());
@@ -243,13 +256,13 @@ int main(int _argc, char **_argv)
             // If point is reached, shift into "follow path" mode.
             if ((locator.getLocationX() == closePoint[0]) && (locator.getLocationY() == closePoint[1]))
             {
-                mode = 1;   // Mode = calculate path.
+                driver = pathCalc;   // Mode = calculate path.
                 std::cout << "Arrived at path point..." << std::endl;
             }
         }
 
         // Drive mode; Calculate path
-        if (mode == 1)
+        if (driver == pathCalc)
         {
             cv::Point startPos = myMap.getCoordsPoint(locator.getLocationX(),locator.getLocationY());
 
@@ -260,6 +273,13 @@ int main(int _argc, char **_argv)
             for (uint i = 0; i < drivePathPoints.size(); i++)
             {
                 drivePathXY.insert(drivePathXY.begin(), myMap.getCoordsXY(drivePathPoints[i]));
+            }
+
+            //Round elements in array
+            for (uint i = 0; i < drivePathPoints.size(); i++)
+            {
+                drivePathXY[i][0] = roundf(drivePathXY[i][0] * 10) / 10;
+                drivePathXY[i][1] = roundf(drivePathXY[i][1] * 10) / 10;
             }
 
             // Draw path for testing purposes
@@ -274,11 +294,11 @@ int main(int _argc, char **_argv)
             mutex.unlock();
 
             // Set mode; follow path.
-            mode = 2;
+            driver = endPointsDriver;
             std::cout << "Path calculated succesfully..." << std::endl;
         }
 
-        if (mode == 2)
+        if (driver == endPointsDriver)
         {
             // Update robot location and direction in controller.
             control.setPosX(locator.getLocationX());
@@ -287,10 +307,7 @@ int main(int _argc, char **_argv)
 
             // Start controller.
             std::cout << "Driving path..." << std::endl;
-            if (control.getActive() == 0)
-            {
-                control.moveVector(drivePathXY);
-            }
+            control.moveVector(drivePathXY);
 
             // Set static speed.
             speed = 0.2;
