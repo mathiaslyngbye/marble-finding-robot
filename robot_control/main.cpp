@@ -183,6 +183,7 @@ int main(int _argc, char **_argv)
 
     //Declare enum used to switch between modes
     driveMode driver = pathLocator;
+    int endPointNumber = 0;
 
     // Establish variables used for finding closest point.
     double currentX = locator.getLocationX();   // Current X location
@@ -267,20 +268,26 @@ int main(int _argc, char **_argv)
             cv::Point startPos = myMap.getCoordsPoint(locator.getLocationX(),locator.getLocationY());
 
             // Generate path from current point to 'some' endpoint.
-            drivePathPoints = pathplan.getPath(startPos,endPoints[2]);
+            drivePathPoints = pathplan.getPath(startPos,endPoints[endPointNumber]);
+            endPointNumber += 1;
+            drivePathXY.clear();
 
             // Convert path to XY coordinates.
             for (uint i = 0; i < drivePathPoints.size(); i++)
             {
-                drivePathXY.insert(drivePathXY.begin(), myMap.getCoordsXY(drivePathPoints[i]));
+                //drivePathXY.insert(drivePathXY.begin(), myMap.getCoordsXY(drivePathPoints[i]));
+                drivePathXY.push_back(myMap.getCoordsXY(drivePathPoints[i]));
             }
 
             //Round elements in array
-            for (uint i = 0; i < drivePathPoints.size(); i++)
+            for (uint i = 0; i < drivePathXY.size(); i++)
             {
                 drivePathXY[i][0] = roundf(drivePathXY[i][0] * 10) / 10;
                 drivePathXY[i][1] = roundf(drivePathXY[i][1] * 10) / 10;
             }
+
+            // Clear path image
+            testImage = floor_plan.clone();
 
             // Draw path for testing purposes
             for(uint i = 0; i<drivePathPoints.size();i++)
@@ -309,8 +316,13 @@ int main(int _argc, char **_argv)
             std::cout << "Driving path..." << std::endl;
             control.moveVector(drivePathXY);
 
+            if (control.getActive() == 0)
+            {
+                driver = pathCalc;
+            }
+
             // Set static speed.
-            speed = 0.2;
+            speed = 0.13;
             dir = control.getDir();
         }
 

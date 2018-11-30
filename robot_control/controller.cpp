@@ -66,6 +66,8 @@ void controller::moveVector(std::vector<std::array<double, 2>> points)
     if (active == 0)
     {
         localPoints = points;
+        localPoints.erase(localPoints.begin());
+        localPoints.erase(localPoints.begin());
     }
 
     if (!localPoints.empty())
@@ -74,6 +76,7 @@ void controller::moveVector(std::vector<std::array<double, 2>> points)
         movePoint(localPoints[0]);
         if (currX == localPoints[0][0] && currY == localPoints[0][1])
         {
+            localPoints.erase(localPoints.begin());
             localPoints.erase(localPoints.begin());
             localPoints.erase(localPoints.begin());
         }
