@@ -17,7 +17,9 @@ public:
     void setPosX(double posX);
     void setPosY(double posY);
     double getDifference(double b1, double b2);
+    bool isClose(std::array<double, 2> point);
 private:
+    float distancePath = 0;
     float speed;
     float dir;
     float currDir;

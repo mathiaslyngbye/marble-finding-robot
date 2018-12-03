@@ -111,6 +111,7 @@ void marbleDetect::drawCircle(ConstImageStampedPtr &msg)
 
 float marbleDetect::getBlue()
 {
+    lastBlue = currBlue;
     cv::Mat im = cameraImage.clone();
     int blueLeft = 0;
     int blueRight = 0;
@@ -132,17 +133,16 @@ float marbleDetect::getBlue()
             }
         }
     }
+    float pixel_sum = blueRight + blueLeft;
+    currBlue = pixel_sum;
+    return pixel_sum;
+}
 
-    int pixel_threshold = 500;
-    float pixel_difference =  blueRight - blueLeft;
-
-    if(pixel_difference < -pixel_threshold)
+bool marbleDetect::collected()
+{
+    if ((lastBlue - currBlue) > 500)
     {
-        pixel_difference = -pixel_threshold;
+        return 1;
     }
-    else if(pixel_difference > pixel_threshold)
-    {
-        pixel_difference = pixel_threshold;
-    }
-    return pixel_difference;
+    return 0;
 }

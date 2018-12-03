@@ -17,10 +17,13 @@ public:
     float getBlue();
     cv::Mat getCirc();
     bool marbleClose();
+    bool collected();
 private:
     cv::Mat cameraImage;
     cv::Mat CircImage;
     buffer circBuffer;
+    int currBlue = 0;
+    int lastBlue = 0;
 };
 
 #endif // MARBLEDETECT_H

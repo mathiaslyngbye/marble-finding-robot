@@ -45,16 +45,43 @@ void controller::movePoint(std::array<double, 2> point)
 
     float goalDir = (roundf(thetaHat * 10) / 10);
 
-    double dirChange = getDifference(currDir + 3.14, goalDir);
-    //speed = 0.20;
-    if (dirChange > 0)
+    double dirChange = getDifference(currDir, goalDir);
+
+    /*
+    if (dirChange < 0.7)
     {
         dir = 0.4;
     }
-    else if (dirChange < 0)
+    else if (dirChange > 0.7)
     {
         dir = -0.4;
     }
+    */
+
+    if ((dirChange<0.2) && (dirChange>-0.2))
+    {
+        if(dirChange < 0)
+        {
+            dir = -0.1;
+        }
+        else
+        {
+            dir = 0.1;
+        }
+    }
+    else
+    {
+        dir = -dirChange * 0.50;
+    }
+    if (dir > 3.14)
+    {
+        dir = 0.4;
+    }
+    else if (dir < -3.14)
+    {
+        dir = -0.4;
+    }
+
     std::cout << "Current d: " << currDir << "\t Goal d: " << goalDir << std::endl;
     std::cout << "Current x: " << currX << "\tGoal x: " << x << std::endl;
     std::cout << "Current y: " << currY << "\tGoal y: " << y << std::endl;
@@ -74,10 +101,8 @@ void controller::moveVector(std::vector<std::array<double, 2>> points)
     {
         active = 1;
         movePoint(localPoints[0]);
-        if (currX == localPoints[0][0] && currY == localPoints[0][1])
+        if (isClose(localPoints[0]))
         {
-            localPoints.erase(localPoints.begin());
-            localPoints.erase(localPoints.begin());
             localPoints.erase(localPoints.begin());
         }
     }
@@ -95,4 +120,15 @@ double controller::getDifference(double b1, double b2)
     if (r >= 3.14)
         r -= 6.28;
     return r;
+}
+
+bool controller::isClose(std::array<double, 2> point)
+{
+    distancePath = std::sqrt(pow((point[0] - currX),2) + pow((point[1] - currY),2));
+    std::cout << "Distance to next point is:  " << distancePath << std::endl;
+    if (distancePath < 0.8)
+    {
+        return 1;
+    }
+    return 0;
 }

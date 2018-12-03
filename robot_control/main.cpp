@@ -145,6 +145,7 @@ int main(int _argc, char **_argv)
         pointsDriver,
         endPointsDriver,
         pathLocator,
+        pathCalcFirst,
         pathCalc
     };
 
@@ -227,6 +228,8 @@ int main(int _argc, char **_argv)
     std::vector<cv::Point> drivePathPoints;          // Vector containing Points
     std::vector<std::array<double,2>> drivePathXY;  // Vector containing x and y values.
 
+    bool pathFound = 0;
+
     // Loop
     while (true)
     {
@@ -237,6 +240,45 @@ int main(int _argc, char **_argv)
         mutex.lock();
         cv::waitKey(1);
         mutex.unlock();
+
+        // Fuzzy Controller variables
+        float sm_dist = 10;
+        float sm_angl = 0;
+
+        // Find smallest angle
+        for (int i = 30; i<170;i++)
+        {
+            if (lidar_ranges[i]<sm_dist)
+            {
+                sm_dist = lidar_ranges[i];
+                sm_angl = lidar_angles[i];
+            }
+        }
+
+        std::cout << "There is this much blue:  " << marbDetect.getBlue() << std::endl;
+        if (marbDetect.getBlue() > 500)
+        {
+            driver = fuzzyMarble;
+            std::cout << "Driver is fuzzyMarble" << std::endl;
+        }
+        else
+        {
+            if (pathFound == 0)
+            {
+                driver = pathLocator;
+                std::cout << "Driver is pathLocator" << std::endl;
+            }
+            else if (control.getActive() == 1)
+            {
+                driver = endPointsDriver;
+                std::cout << "Driver is endPointDriver" << std::endl;
+            }
+            else
+            {
+                driver = pathCalc;
+                std::cout << "Driver is pathCalc" << std::endl;
+            }
+        }
 
         // Initialize driving; go to closes path point.
         if (driver == pathLocator)
@@ -257,13 +299,14 @@ int main(int _argc, char **_argv)
             // If point is reached, shift into "follow path" mode.
             if ((locator.getLocationX() == closePoint[0]) && (locator.getLocationY() == closePoint[1]))
             {
-                driver = pathCalc;   // Mode = calculate path.
+                driver = pathCalcFirst;   // Mode = calculate path.
                 std::cout << "Arrived at path point..." << std::endl;
+                pathFound = 1;
             }
         }
 
         // Drive mode; Calculate path
-        if (driver == pathCalc)
+        if (driver == pathCalcFirst)
         {
             cv::Point startPos = myMap.getCoordsPoint(locator.getLocationX(),locator.getLocationY());
 
@@ -305,6 +348,32 @@ int main(int _argc, char **_argv)
             std::cout << "Path calculated succesfully..." << std::endl;
         }
 
+        if (driver == pathCalc)
+        {
+            drivePathXY.clear();
+            drivePathPoints.clear();
+
+            drivePathPoints = pathplan.getPath(endPoints[endPointNumber-1],endPoints[endPointNumber]);
+            endPointNumber += 1;
+
+            // Convert path to XY coordinates.
+            for (uint i = 0; i < drivePathPoints.size(); i++)
+            {
+                //drivePathXY.insert(drivePathXY.begin(), myMap.getCoordsXY(drivePathPoints[i]));
+                drivePathXY.push_back(myMap.getCoordsXY(drivePathPoints[i]));
+            }
+
+            //Round elements in array
+            for (uint i = 0; i < drivePathXY.size(); i++)
+            {
+                drivePathXY[i][0] = roundf(drivePathXY[i][0] * 10) / 10;
+                drivePathXY[i][1] = roundf(drivePathXY[i][1] * 10) / 10;
+            }
+
+            // Set mode; follow path.
+            driver = endPointsDriver;
+        }
+
         if (driver == endPointsDriver)
         {
             // Update robot location and direction in controller.
@@ -322,50 +391,41 @@ int main(int _argc, char **_argv)
             }
 
             // Set static speed.
-            speed = 0.13;
+            speed = 0.5;
             dir = control.getDir();
         }
 
-        //Move between endpoints with vector
-        /*
-        if (control.getActive() == 0)
+        if (driver == fuzzyMarble)
         {
-            control.moveVector();
+            mutex.lock();
+            if (marbDetect.marbleClose())    //Marble is right infront, just has to be collected... had issues with weird behavior on fuzzymarb close, can explain in report
+            {
+                controller2.setValues(sm_dist, sm_angl, marbDetect.getMarb());
+                controller2.process();
+                dir = controller2.getOutput().direction;
+                speed = 0.5;
+            }
+            else    //marble collection controller
+            {
+                controller2.setValues(sm_dist, sm_angl, marbDetect.getMarb());
+                controller2.process();
+                speed = controller2.getOutput().speed;
+                dir = controller2.getOutput().direction;
+            }
+            mutex.unlock();
         }
-        */
 
-        // POINT TO POINT NAVIGATION
-        /*
-        control.setPosX(locator.getLocationX());
-        control.setPosY(locator.getLocationY());
-        control.setDir(locator.getDir());
-
-        control.movePoint(3, 2);
-        dir = control.getDir();
-        speed = control.getSpeed();
-        */
+        if (driver == fuzzyObstacle)    //obstacle avoidance controller
+        {
+            controller1.setValues(sm_dist, sm_angl);
+            controller1.process();
+            speed = controller1.getOutput().speed;
+            dir = controller1.getOutput().direction;
+        }
 
 
         // Fuzzy logic driving + marbCollection
         /*
-
-        // Control
-        sm_dist = 10;
-        sm_angl = 0;
-
-        // Fuzzy Controller variables
-        float sm_dist = 10;
-        float sm_angl = 0;
-
-        // Find smallest angle
-        for (int i = 30; i<170;i++)
-        {
-            if (lidar_ranges[i]<sm_dist)
-            {
-                sm_dist = lidar_ranges[i];
-                sm_angl = lidar_angles[i];
-            }
-        }
 
         mutex.lock();
         if (marbDetect.marbleClose()) //Marble is right infront, just has to be collected... had issues with weird behavior on fuzzymarb close, can explain in report
