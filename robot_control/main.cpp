@@ -144,7 +144,6 @@ int main(int _argc, char **_argv)
         fuzzyMarble,
         pointsDriver,
         endPointsDriver,
-        pathLocator,
         pathCalcFirst,
         pathCalc
     };
@@ -183,7 +182,7 @@ int main(int _argc, char **_argv)
     controller2.init_controller();
 
     //Declare enum used to switch between modes
-    driveMode driver = pathLocator;
+    driveMode driver = pathCalcFirst;
     int endPointNumber = 0;
 
     // Establish variables used for finding closest point.
@@ -194,6 +193,8 @@ int main(int _argc, char **_argv)
     std::array<double,2> testPoint;             // Initiate cartesian point test variable.
     std::array<double,2> closePoint;            // Initiate cartesian point storing closest point.
 
+
+    mutex.lock();
     // Find closest path point.
     for (uint i = 0; i < pathPoints.size(); i++)
     {
@@ -210,6 +211,7 @@ int main(int _argc, char **_argv)
             closePoint = testPoint;
         }
     }
+    mutex.unlock();
 
     // Shit pile of debugging output by Malytm
     //std::cout << currentX << ':' << currentY << std::endl;
@@ -255,31 +257,42 @@ int main(int _argc, char **_argv)
             }
         }
 
-        std::cout << "There is this much blue:  " << marbDetect.getBlue() << std::endl;
-        if (marbDetect.getBlue() > 500)
+        std::cout << "There is this much blue:  " << marbDetect.getBlue() << "  And recently collected is:  " << control.getCollected() << std::endl;
+        if (marbDetect.collected() == 1)
         {
-            driver = fuzzyMarble;
-            std::cout << "Driver is fuzzyMarble" << std::endl;
-        }
-        else
-        {
+            std::cout << "WE COLLECTED ONE" << std::endl;
+            control.setCollected();
             if (pathFound == 0)
             {
-                driver = pathLocator;
-                std::cout << "Driver is pathLocator" << std::endl;
-            }
-            else if (control.getActive() == 1)
-            {
-                driver = endPointsDriver;
-                std::cout << "Driver is endPointDriver" << std::endl;
+                driver = pathCalcFirst;
             }
             else
             {
-                driver = pathCalc;
-                std::cout << "Driver is pathCalc" << std::endl;
+                driver = endPointsDriver;
             }
         }
+        else if (((marbDetect.getBlue() > 1400) && (control.getCollected() == 0)) && (pathFound == true))
+        {
+            driver = fuzzyMarble;
+            //std::cout << "Driver is fuzzyMarble" << std::endl;
+        }
+        else if (control.getActive() == 1)
+        {
+            driver = endPointsDriver;
+            //std::cout << "Driver is endPointDriver" << std::endl;
+        }
+        else if (pathFound == 0)
+        {
+            driver = pathCalcFirst;
+            //std::cout << "Driver is pathCalcFirst" << std::endl;
+        }
+        else
+        {
+            driver = pathCalc;
+            //std::cout << "Driver is pathCalc" << std::endl;
+        }
 
+        /*
         // Initialize driving; go to closes path point.
         if (driver == pathLocator)
         {
@@ -294,7 +307,7 @@ int main(int _argc, char **_argv)
             // Set direction and speed accoridng to controller output.
             dir = control.getDir();
             //speed = control.getSpeed();
-            speed = 0.05;
+            speed = 0.1;
 
             // If point is reached, shift into "follow path" mode.
             if ((locator.getLocationX() == closePoint[0]) && (locator.getLocationY() == closePoint[1]))
@@ -304,21 +317,21 @@ int main(int _argc, char **_argv)
                 pathFound = 1;
             }
         }
+        */
 
         // Drive mode; Calculate path
         if (driver == pathCalcFirst)
         {
-            cv::Point startPos = myMap.getCoordsPoint(locator.getLocationX(),locator.getLocationY());
+            drivePathXY.clear();
+            drivePathPoints.clear();
 
             // Generate path from current point to 'some' endpoint.
-            drivePathPoints = pathplan.getPath(startPos,endPoints[endPointNumber]);
+            drivePathPoints = pathplan.getPath(myMap.getCoordsPoint(closePoint[0],closePoint[1]),endPoints[endPointNumber]);
             endPointNumber += 1;
-            drivePathXY.clear();
 
             // Convert path to XY coordinates.
             for (uint i = 0; i < drivePathPoints.size(); i++)
             {
-                //drivePathXY.insert(drivePathXY.begin(), myMap.getCoordsXY(drivePathPoints[i]));
                 drivePathXY.push_back(myMap.getCoordsXY(drivePathPoints[i]));
             }
 
@@ -345,6 +358,7 @@ int main(int _argc, char **_argv)
 
             // Set mode; follow path.
             driver = endPointsDriver;
+            pathFound = 1;
             std::cout << "Path calculated succesfully..." << std::endl;
         }
 
@@ -359,7 +373,6 @@ int main(int _argc, char **_argv)
             // Convert path to XY coordinates.
             for (uint i = 0; i < drivePathPoints.size(); i++)
             {
-                //drivePathXY.insert(drivePathXY.begin(), myMap.getCoordsXY(drivePathPoints[i]));
                 drivePathXY.push_back(myMap.getCoordsXY(drivePathPoints[i]));
             }
 
@@ -382,7 +395,6 @@ int main(int _argc, char **_argv)
             control.setDir(locator.getDir());
 
             // Start controller.
-            std::cout << "Driving path..." << std::endl;
             control.moveVector(drivePathXY);
 
             if (control.getActive() == 0)
@@ -391,7 +403,7 @@ int main(int _argc, char **_argv)
             }
 
             // Set static speed.
-            speed = 0.5;
+            speed = 0.45;
             dir = control.getDir();
         }
 

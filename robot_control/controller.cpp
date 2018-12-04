@@ -37,6 +37,16 @@ void controller::setPosY(double curreY)
     currY = curreY;
 }
 
+void controller::setCollected()
+{
+    recentlyCollected = true;
+}
+
+bool controller::getCollected()
+{
+    return recentlyCollected;
+}
+
 void controller::movePoint(std::array<double, 2> point)
 {
     double x = point[0];
@@ -62,11 +72,11 @@ void controller::movePoint(std::array<double, 2> point)
     {
         if(dirChange < 0)
         {
-            dir = -0.1;
+            dir = 0.1;
         }
         else
         {
-            dir = 0.1;
+            dir = -0.1;
         }
     }
     else
@@ -82,15 +92,17 @@ void controller::movePoint(std::array<double, 2> point)
         dir = -0.4;
     }
 
+    /*
     std::cout << "Current d: " << currDir << "\t Goal d: " << goalDir << std::endl;
     std::cout << "Current x: " << currX << "\tGoal x: " << x << std::endl;
     std::cout << "Current y: " << currY << "\tGoal y: " << y << std::endl;
     std::cout << std::endl;
+    */
 }
 
 void controller::moveVector(std::vector<std::array<double, 2>> points)
 {
-    if (active == 0)
+    if (active == false)
     {
         localPoints = points;
         localPoints.erase(localPoints.begin());
@@ -99,16 +111,17 @@ void controller::moveVector(std::vector<std::array<double, 2>> points)
 
     if (!localPoints.empty())
     {
-        active = 1;
+        active = true;
         movePoint(localPoints[0]);
         if (isClose(localPoints[0]))
         {
             localPoints.erase(localPoints.begin());
+            recentlyCollected = false;
         }
     }
     if (localPoints.empty())
     {
-        active = 0;
+        active = false;
     }
 }
 
@@ -125,10 +138,10 @@ double controller::getDifference(double b1, double b2)
 bool controller::isClose(std::array<double, 2> point)
 {
     distancePath = std::sqrt(pow((point[0] - currX),2) + pow((point[1] - currY),2));
-    std::cout << "Distance to next point is:  " << distancePath << std::endl;
+    //std::cout << "Distance to next point is:  " << distancePath << std::endl;
     if (distancePath < 0.8)
     {
-        return 1;
+        return true;
     }
-    return 0;
+    return false;
 }

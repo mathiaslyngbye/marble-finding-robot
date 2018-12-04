@@ -18,15 +18,18 @@ public:
     void setPosY(double posY);
     double getDifference(double b1, double b2);
     bool isClose(std::array<double, 2> point);
+    void setCollected();
+    bool getCollected();
 private:
-    float distancePath = 0;
+    float distancePath = false;
     float speed;
     float dir;
     float currDir;
     double currX;
     double currY;
-    int active = 0;
+    int active = false;
     std::vector<std::array<double, 2>> localPoints;
+    bool recentlyCollected = false;
 };
 
 #endif // CONTROLLER_H

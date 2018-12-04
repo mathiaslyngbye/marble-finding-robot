@@ -15,6 +15,11 @@ cv::Mat marbleDetect::getCirc()
     return CircImage;
 }
 
+cv::Mat marbleDetect::getDeafult()
+{
+    return cameraImage;
+}
+
 bool marbleDetect::marbleClose()
 {
     cv::Mat im = cameraImage.clone();
@@ -30,7 +35,7 @@ bool marbleDetect::marbleClose()
             }
         }
     }
-    if (blue > 5000)
+    if (blue > 8000)
     {
         return true;
     }
@@ -134,15 +139,15 @@ float marbleDetect::getBlue()
         }
     }
     float pixel_sum = blueRight + blueLeft;
-    currBlue = pixel_sum;
+    currBlue = marbleClose();
     return pixel_sum;
 }
 
 bool marbleDetect::collected()
 {
-    if ((lastBlue - currBlue) > 500)
+    if ((lastBlue == true) && (currBlue == false))
     {
-        return 1;
+        return true;
     }
-    return 0;
+    return false;
 }

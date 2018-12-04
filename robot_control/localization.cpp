@@ -15,8 +15,6 @@ void Localization::poseCallBack(ConstPosesStampedPtr &msg)
     {
         if (msg->pose(i).name() == "pioneer2dx")
         {
-            //posf.x = msg->pose(i).position().x();
-            //posf.y = msg->pose(i).position().y();
             posArr[0] = msg->pose(i).position().x();
             posArr[1] = msg->pose(i).position().y();
 
