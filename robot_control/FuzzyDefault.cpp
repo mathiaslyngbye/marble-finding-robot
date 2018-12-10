@@ -153,7 +153,6 @@ void take_marble::init_controller()
     Odir->setRange(-2.26, 2.26);
     Odir->setLockValueInRange(false);
     Odir->addTerm(new Ramp("left", -1, -2.26));
-    //Odir->addTerm(new Triangle("center", -0.3, 0, 0.3));
     Odir->addTerm(new Ramp("right", 1, 2.26));
     engine->addInputVariable(Odir);
 
