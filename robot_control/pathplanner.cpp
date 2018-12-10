@@ -291,30 +291,73 @@ void Pathplanner::pathLocalMaxima()
 
 void Pathplanner::pathPreClean()
 {
-    int hor_seq[8] = {COLORVAL_MAX,COLORVAL_MAX,COLORVAL_PATH,COLORVAL_PATH,COLORVAL_PATH,COLORVAL_PATH,COLORVAL_PATH,COLORVAL_MAX};
-    int ver_seq[8] = {COLORVAL_PATH,COLORVAL_PATH,COLORVAL_PATH,COLORVAL_PATH,COLORVAL_PATH,COLORVAL_MAX,COLORVAL_MAX,COLORVAL_MAX};
-    int hor_delSeq[8] = {COLORVAL_MAX,COLORVAL_MAX,COLORVAL_MISC,COLORVAL_MAX,COLORVAL_MAX,COLORVAL_MAX,COLORVAL_MISC,COLORVAL_MAX};
-    int ver_delSeq[8] = {COLORVAL_MISC,COLORVAL_MAX,COLORVAL_MAX,COLORVAL_MAX,COLORVAL_MISC,COLORVAL_MAX,COLORVAL_MAX,COLORVAL_MAX};
-
     int pixelPath = 0;
     int pixelBlack = 0;
 
-    // Remove single pixels
+    Mat tmp_path1 = image.clone();
+    Mat tmp_path2 = image.clone();
+    Mat tmp_path3 = image.clone();
+    Mat tmp_path4 = image.clone();
+    Mat tmp_path5 = image.clone();
+
+
+    // Calculate horizontal paths
     for (int rows = 0; rows < image.rows; rows++)
     {
         for (int cols = 0; cols < image.cols; cols++)
         {
-            if(image_path.at<Vec3b>(Point(cols,rows))[INDEX_PATH] == COLORVAL_PATH)
+            if((image_path.at<Vec3b>(Point(cols, rows))[INDEX_PATH] == COLORVAL_PATH)
+                    && image_path.at<Vec3b>(Point(cols-1, rows))[INDEX_PATH] == COLORVAL_PATH)
+            {
+                tmp_path1.at<Vec3b>(Point(cols, rows))[INDEX_PATH] = COLORVAL_PATH;
+            }
+        }
+    }
+
+    // Calculate veritcal paths
+    for (int rows = 0; rows < image.rows; rows++)
+    {
+        for (int cols = 0; cols < image.cols; cols++)
+        {
+            if((image_path.at<Vec3b>(Point(cols, rows))[INDEX_PATH] == COLORVAL_PATH)
+                    && image_path.at<Vec3b>(Point(cols, rows-1))[INDEX_PATH] == COLORVAL_PATH)
+            {
+                tmp_path2.at<Vec3b>(Point(cols, rows))[INDEX_PATH] = COLORVAL_PATH;
+            }
+        }
+    }
+
+    for (int rows = 0; rows < image.rows; rows++)
+    {
+        for (int cols = 0; cols < image.cols; cols++)
+        {
+
+            if((tmp_path1.at<Vec3b>(Point(cols, rows))[INDEX_PATH] == COLORVAL_PATH)&&!(tmp_path2.at<Vec3b>(Point(cols, rows))[INDEX_PATH] == COLORVAL_PATH))
+            {
+                tmp_path3.at<Vec3b>(Point(cols, rows))[INDEX_PATH] = COLORVAL_PATH;
+            }
+            if(!(tmp_path1.at<Vec3b>(Point(cols, rows))[INDEX_PATH] == COLORVAL_PATH)&&(tmp_path2.at<Vec3b>(Point(cols, rows))[INDEX_PATH] == COLORVAL_PATH))
+            {
+                tmp_path4.at<Vec3b>(Point(cols, rows))[INDEX_PATH] = COLORVAL_PATH;
+            }
+        }
+    }
+
+    for (int rows = 0; rows < image.rows; rows++)
+    {
+        for (int cols = 0; cols < image.cols; cols++)
+        {
+            if(tmp_path3.at<Vec3b>(Point(cols,rows))[INDEX_PATH] == COLORVAL_PATH)
             {
                 pixelPath = 0;
                 pixelBlack = 0;
                 for(int i = 0; i<8;i++)
                 {
-                    if(image_path.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i])))[INDEX_PATH] == COLORVAL_PATH)
+                    if(tmp_path3.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i])))[INDEX_PATH] == COLORVAL_PATH)
                     {
                         pixelPath++;
                     }
-                    if(image.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i]))) == color_black)
+                    if(tmp_path3.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i]))) == color_black)
                     {
                         pixelBlack++;
                     }
@@ -322,121 +365,46 @@ void Pathplanner::pathPreClean()
 
                 if((pixelPath == 0)||(pixelBlack != 0))
                 {
-                    image_path.at<Vec3b>(Point(cols,rows))[INDEX_PATH] = COLORVAL_MAX;
+                    tmp_path3.at<Vec3b>(Point(cols,rows))[INDEX_PATH] = COLORVAL_MAX;
                 }
             }
-        }
-    }
-
-    // Mark double pixels
-    pixelPath = 0;
-
-    for (int rows = 0; rows < image.rows; rows++)
-    {
-        for (int cols = 0; cols < image.cols; cols++)
-        {
-            if(image_path.at<Vec3b>(Point(cols,rows))[INDEX_PATH] == COLORVAL_PATH)
+            if(tmp_path2.at<Vec3b>(Point(cols,rows))[INDEX_PATH] == COLORVAL_PATH)
             {
                 pixelPath = 0;
+                pixelBlack = 0;
                 for(int i = 0; i<8;i++)
                 {
-                    if(image_path.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i])))[INDEX_PATH] == COLORVAL_PATH)
+                    if(tmp_path4.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i])))[INDEX_PATH] == COLORVAL_PATH)
                     {
                         pixelPath++;
                     }
-                }
-
-                if((pixelPath == 1))
-                {
-                    image_path.at<Vec3b>(Point(cols,rows))[INDEX_MISC] = COLORVAL_MISC;
-                }
-            }
-        }
-    }
-
-    // Flush double pixels
-    for (int rows = 0; rows < image.rows; rows++)
-    {
-        for (int cols = 0; cols < image.cols; cols++)
-        {
-            if(image_path.at<Vec3b>(Point(cols,rows))[INDEX_MISC] == COLORVAL_MISC)
-            {
-                for(int i = 0; i<8;i++)
-                {
-                    if(image_path.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i])))[INDEX_MISC] == COLORVAL_MISC)
+                    if(tmp_path4.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i]))) == color_black)
                     {
-                        image_path.at<Vec3b>(Point(cols,rows))[INDEX_PATH] = COLORVAL_MAX;
-                        image_path.at<Vec3b>(Point(cols,rows))[INDEX_MISC] = COLORVAL_MAX;
-                        image_path.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i])))[INDEX_PATH] = COLORVAL_MAX;
-                        image_path.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i])))[INDEX_MISC] = COLORVAL_MAX;
+                        pixelBlack++;
                     }
                 }
 
-                image_path.at<Vec3b>(Point(cols,rows))[INDEX_MISC] = COLORVAL_MAX;
+                if((pixelPath == 0)||(pixelBlack != 0))
+                {
+                    tmp_path4.at<Vec3b>(Point(cols,rows))[INDEX_PATH] = COLORVAL_MAX;
+                }
             }
         }
     }
-
-    //Mark 2 row paths
-    bool horPattern = true;
-    bool verPattern = true;
 
     for (int rows = 0; rows < image.rows; rows++)
     {
         for (int cols = 0; cols < image.cols; cols++)
         {
-            horPattern = true;
-            verPattern = true;
 
-            for(int i = 0; i<8;i++)
+            if((tmp_path3.at<Vec3b>(Point(cols, rows))[INDEX_PATH] == COLORVAL_PATH)||(tmp_path4.at<Vec3b>(Point(cols, rows))[INDEX_PATH] == COLORVAL_PATH))
             {
-                if(image_path.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i])))[INDEX_PATH] != hor_seq[i])
-                {
-                    horPattern = false;
-                }
-
-                if(image_path.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i])))[INDEX_PATH] != ver_seq[i])
-                {
-                    verPattern = false;
-                }
-            }
-
-            if(horPattern)
-            {
-                image_path.at<Vec3b>(Point(cols,rows))[INDEX_MISC] = COLORVAL_MISC;
-
-                for(int i = 0; i<8; i++)
-                {
-                    image_path.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i])))[INDEX_MISC] = hor_delSeq[i];
-                }
-            }
-
-            if(verPattern)
-            {
-                image_path.at<Vec3b>(Point(cols,rows))[INDEX_MISC] = COLORVAL_MISC;
-
-                for(int i = 0; i<8; i++)
-                {
-                    image_path.at<Vec3b>(Point((cols+x_seq[i]),(rows+y_seq[i])))[INDEX_MISC] = ver_delSeq[i];
-                }
+                tmp_path5.at<Vec3b>(Point(cols, rows))[INDEX_PATH] = COLORVAL_PATH;
             }
         }
     }
 
-
-    // Flush 2 row paths
-    for (int rows = 0; rows < image.rows; rows++)
-    {
-        for (int cols = 0; cols < image.cols; cols++)
-        {
-            if(image_path.at<Vec3b>(Point(cols,rows))[INDEX_MISC]==COLORVAL_MISC)
-            {
-                image_path.at<Vec3b>(Point(cols,rows))[INDEX_MISC] = COLORVAL_MAX;
-                image_path.at<Vec3b>(Point(cols,rows))[INDEX_PATH] = COLORVAL_MAX;
-            }
-        }
-    }
-
+    image_path = tmp_path4;
 }
 
 void Pathplanner::pathConnect()
