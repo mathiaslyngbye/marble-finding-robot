@@ -404,7 +404,7 @@ void Pathplanner::pathPreClean()
         }
     }
 
-    image_path = tmp_path4;
+    image_path = tmp_path5;
 }
 
 void Pathplanner::pathConnect()
