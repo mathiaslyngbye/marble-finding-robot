@@ -165,13 +165,11 @@ void obstacle_avoidance::init_controller()
     Odir->setName("Odir");
     Odir->setDescription("");
     Odir->setEnabled(true);
-    Odir->setRange(-PI/2, PI/2);
+    Odir->setRange(-2.26, 2.26);
     Odir->setLockValueInRange(false);
-    //Odir->addTerm(new Sigmoid("leftB", -1, -2.26));
-    Odir->addTerm(new Ramp("left", 0, -PI/2));
+    Odir->addTerm(new Ramp("left", 0, -2.26));
     Odir->addTerm(new Triangle("center", -0.2, 0, 0.2));
-    Odir->addTerm(new Ramp("right", 0, PI/2));
-    //Odir->addTerm(new Sigmoid("rightB", 1, 2.26));
+    Odir->addTerm(new Ramp("right", 0, 2.26));
     engine->addInputVariable(Odir);
 
     //Outputvariable (steering direction):

@@ -3,8 +3,6 @@
 
 #include <fl/Headers.h>
 
-#define PI 3.14159265
-
 struct output {
     float direction;
     float speed;
