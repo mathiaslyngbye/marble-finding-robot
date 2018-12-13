@@ -157,9 +157,9 @@ int main(int _argc, char **_argv)
     cv::Mat floor_plan;
     floor_plan = cv::imread(floor_plan_JPG, cv::IMREAD_COLOR);
 
-    // Create window and image for testing purposes
+    /*// Create window and image for testing purposes
     cv::namedWindow("Test Space", cv::WINDOW_AUTOSIZE); // Create a window.
-    cv::Mat testImage = floor_plan.clone();             // Generate test image of floor_plan.png
+    cv::Mat testImage = floor_plan.clone();             // Generate test image of floor_plan.png*/
 
     // Initiate location map
     cv::Mat floor_plan_location = floor_plan.clone();                         // Duplicate floor_plan for location map.
@@ -257,7 +257,7 @@ int main(int _argc, char **_argv)
             }
         }
 
-        std::cout << "There is this much blue:  " << marbDetect.getBlue() << "  And recently collected is:  " << control.getCollected() << std::endl;
+        //std::cout << "There is this much blue:  " << marbDetect.getBlue() << "  And recently collected is:  " << control.getCollected() << std::endl;
         if (marbDetect.collected() == 1)
         {
             std::cout << "WE COLLECTED ONE" << std::endl;
@@ -343,18 +343,18 @@ int main(int _argc, char **_argv)
             }
 
             // Clear path image
-            testImage = floor_plan.clone();
+            //testImage = floor_plan.clone();
 
-            // Draw path for testing purposes
+            /*// Draw path for testing purposes
             for(uint i = 0; i<drivePathPoints.size();i++)
             {
                 testImage.at<cv::Vec3b>(drivePathPoints[i]) = {0,0,255};
-            }
+            }*/
 
-            // Show test image in test space frame.
+            /*// Show test image in test space frame.
             mutex.lock();
             cv::imshow("Test Space", testImage);
-            mutex.unlock();
+            mutex.unlock();*/
 
             // Set mode; follow path.
             driver = endPointsDriver;
@@ -364,6 +364,13 @@ int main(int _argc, char **_argv)
 
         if (driver == pathCalc)
         {
+            if (endPointNumber == endPoints.size())
+            {
+                speed = 0;
+                dir = 0;
+                std::cout << "All points visited, terminating" << std::endl;
+                return 0;
+            }
             drivePathXY.clear();
             drivePathPoints.clear();
 
