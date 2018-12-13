@@ -21,20 +21,20 @@ public:
 
 protected:
     fl::Engine* p_engine;
-    fl::OutputVariable* p_drivingSpeed;
-    fl::OutputVariable* p_drivingDir;
+    fl::OutputVariable* p_driSpeed;
+    fl::OutputVariable* p_driDir;
 };
 
 class obstacle_avoidance : public fuzzy_control
 {
 public:
     void init_controller();
-    void setValues(float obstacleDist, float obstacleDir);
+    void setValues(float obstDist, float obstDir);
 
 private:
     //Inputvariables
-    fl::InputVariable*  p_obstacleDist;
-    fl::InputVariable*  p_obstacleDir;
+    fl::InputVariable*  p_obstDist;
+    fl::InputVariable*  p_obstDir;
 };
 
 class take_marble : public fuzzy_control
